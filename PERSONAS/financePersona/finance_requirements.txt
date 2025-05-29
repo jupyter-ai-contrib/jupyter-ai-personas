@@ -1,0 +1,13 @@
+duckdb
+faiss-cpu
+numpy
+pandas
+scikit-learn
+scipy
+mcp
+agno
+yfinance
+lancedb 
+tantivy 
+pypdf 
+duckduckgo-search
