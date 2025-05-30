@@ -6,8 +6,8 @@ The Persona is packaged in a folder titled `financePersona` as containing the fo
 
 1. `finance_persona.py`: contains the main code for the persona. 
 2. `fd.py`: This contains the `FinancialDatasetsTools` class with several functions and tools.
-3. `requirements.txt`: for installing the various dependencies. 
-4. This `README.md` file for documenting the finance persona. 
+3. `finance_requirements.txt`: for installing the various dependencies. 
+4. This `finance_README.md` file for documenting the finance persona. 
 5. Various image files for the documentation.
 
 ## Set up
