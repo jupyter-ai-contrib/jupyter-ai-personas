@@ -41,7 +41,7 @@ def env_api_keys_from_config(API_KEY_NAME, file_path=DEFAULT_CONFIG_PATH):
         os.environ[key] = value
         if key == API_KEY_NAME:
             fin_key = value
-    return fin_key
+        return fin_key
 
 
 _IS_FINANCIAL_PROMPT = """
