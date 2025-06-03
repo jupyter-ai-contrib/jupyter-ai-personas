@@ -7,20 +7,25 @@ authors = [
     { name = "Sanjiv Das", email = "srdas@scu.edu" }
 ]
 requires-python = ">=3.9"
+
 dependencies = [
     "duckdb",
-    "faiss-cpu",
     "numpy",
     "pandas",
     "scikit-learn",
     "scipy",
-    "mcp",
     "agno",
+    "duckduckgo-search",
+]
+
+[project.optional-dependencies]
+finance = [
     "yfinance",
     "lancedb", 
+    "mcp",
     "tantivy", 
     "pypdf", 
-    "duckduckgo-search",
+    "faiss-cpu",
 ]
 
 [build-system]
@@ -28,4 +33,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.entry-points."jupyter_ai.personas"]
-finance_persona = "jupyter_ai_personas.finance_persona.finance_persona:FinancePersona"
+finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"

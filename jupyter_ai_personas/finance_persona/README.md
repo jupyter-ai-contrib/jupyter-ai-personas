@@ -4,25 +4,28 @@ This persona contains examples that showcase financial uses of agentic workflows
 
 The Persona is packaged in a folder titled `financePersona` as containing the following files:
 
-1. `finance_persona.py`: contains the main code for the persona. 
+1. `persona.py`: contains the main code for the persona. 
 2. `fd.py`: This contains the `FinancialDatasetsTools` class with several functions and tools.
-3. `finance_requirements.txt`: for installing the various dependencies. 
-4. This `finance_README.md` file for documenting the finance persona. 
-5. Various image files for the documentation.
+3. This `README.md` file for documenting the finance persona. 
+4. Various image files for the documentation.
 
 ## Set up
 
 The use of this persona requires an API key from Financial Datasets. You can register and find your account to get an API key. It has excellent tools for access to various quantitative and textual data. For details, see the [documentation](https://docs.financialdatasets.ai/introduction). Once you have the API key, enter AI Settings and choose any `TogetherAI` model, when asked for the API key, enter the Financial Datasets API key, as this persona uses that as a placeholder for the datasets API key. 
 
-Update the TOML file `jupyter_ai_test/pyproject.toml` in Jupyter AI with the following line in the personas section:
+Update the TOML file `jupyter_ai_personas/pyproject.toml` in Jupyter AI with the following line in the personas section:
 
 ```
-finance-persona = "jupyter_ai_test.financePersona.finance_persona:FinancePersona"
+finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
 ```
 
-Install the dependencies using the requirements file metioned above as follows:
+Install the repo as follows in the same conda environment as used for Jupyter AI:
 ```
-jupyter-ai> pip install -r packages/jupyter-ai-test/jupyter_ai_test/financePersona/finance_requirements.txt
+git clone https://github.com/jupyter-ai-contrib/jupyter-ai-personas.git
+```
+
+```
+uv pip install -e .
 ```
 
 Make sure you have API keys for the models used by Agno, see the code in `persona_finance.py` where the code used is based on OpenAI's `gpt-4.1` model:
