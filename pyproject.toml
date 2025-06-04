@@ -23,7 +23,6 @@ dependencies = [
     "duckduckgo-search",
     "agno[aws,tools]>=0.1.0",
     "boto3",
-    "jinja2",
     "langchain",
     "langchain-core",
 ]
@@ -34,4 +33,4 @@ build-backend = "hatchling.build"
 
 [project.entry-points."jupyter_ai.personas"]
 finance_persona = "jupyter_ai_personas.finance_persona.finance_persona:FinancePersona"
-software_team_persona = "jupyter_ai_personas.software_team_persona.software_team_persona:SoftwareTeamPersona"
+software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"

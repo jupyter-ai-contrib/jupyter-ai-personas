@@ -1,11 +1,5 @@
-from typing import Any
-
 from jupyter_ai.personas.base_persona import BasePersona, PersonaDefaults
-from jupyter_ai.chat_handlers.base import BaseChatHandler
 from jupyterlab_chat.models import Message
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from jinja2 import Template
 from jupyter_ai.history import YChatHistory
 from agno.agent import Agent
 from agno.models.aws import AwsBedrock, Claude
@@ -16,7 +10,7 @@ from agno.tools.python import PythonTools
 from agno.tools.file import FileTools
 from agno.tools.github import GithubTools
 
-from .software_team_template import SoftwareTeamVariables, _SOFTWARE_TEAM_PROMPT_TEMPLATE
+from .template import SoftwareTeamVariables, _SOFTWARE_TEAM_PROMPT_TEMPLATE
 
 session = boto3.Session()
 

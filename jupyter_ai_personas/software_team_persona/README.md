@@ -93,6 +93,9 @@ The system is implemented using:
 The software team system is automatically available through the Jupyter AI extension in JupyterLab. It can be accessed through Jupyter Chat and responds to user requests by coordinating its specialized team members.
 
 Example usage:
+
+@SoftwareTeamPersona is my code correct + {CODE}
+
 ```python
 # The system will automatically coordinate between team members to:
 # 1. Plan the implementation
