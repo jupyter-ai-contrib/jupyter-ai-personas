@@ -9,6 +9,16 @@ authors = [
 requires-python = ">=3.9"
 
 dependencies = [
+    "jupyter_ai>=3.0.0a1"
+]
+
+[project.optional-dependencies]
+finance = [
+    "boto3",
+    "lancedb", 
+    "tantivy", 
+    "pypdf", 
+    "faiss-cpu",
     "duckdb",
     "numpy",
     "pandas",
@@ -20,15 +30,13 @@ dependencies = [
     "matplotlib",
     "statsmodels",
     "yfinance",
+    "openai"
 ]
-
-[project.optional-dependencies]
-finance = [
-    "lancedb", 
-    "tantivy", 
-    "pypdf", 
-    "faiss-cpu",
+emoji = [
+    "emoji",
+    "langchain-aws"
 ]
+all = ["jupyter-ai-personas[finance,emoji]"]
 
 [build-system]
 requires = ["hatchling"]
@@ -36,3 +44,4 @@ build-backend = "hatchling.build"
 
 [project.entry-points."jupyter_ai.personas"]
 finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
+emoji_persona = "jupyter_ai_personas.emoji_persona:EmojiPersona"
