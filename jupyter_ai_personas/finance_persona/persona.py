@@ -1,4 +1,5 @@
 from typing import Any
+from pydantic import Field, BaseModel
 
 from jupyterlab_chat.models import Message
 from langchain_core.output_parsers import StrOutputParser
@@ -26,6 +27,11 @@ import numpy as np
 
 from .fd import FinancialDatasetsTools
 
+class UserQueryClassifier(BaseModel): 
+    is_finance_related: bool = Field(
+      description="Returns True if the request is finance related, False otherwise."
+    )
+
 
 def env_api_keys_from_config(API_KEY_NAME, file_path=DEFAULT_CONFIG_PATH):
     """
@@ -41,16 +47,7 @@ def env_api_keys_from_config(API_KEY_NAME, file_path=DEFAULT_CONFIG_PATH):
         os.environ[key] = value
         if key == API_KEY_NAME:
             fin_key = value
-        return fin_key
-
-
-_IS_FINANCIAL_PROMPT = """
-Please determine if the following message is related to finance.
-If so, respond with the boolean value True.
-If not, respond with the boolean value False.
-Do not respond with any other text or explanation.
-Message: 
-"""
+    return fin_key
            
 
 class FinancePersona(BasePersona):
@@ -86,13 +83,16 @@ class FinancePersona(BasePersona):
         )
 
         # Check if the prompt is about finance. If so, pass on to agentic workflow, else use default handling
-        prompt = _IS_FINANCIAL_PROMPT + variables.input.split(" ", 1)[1]
+        prompt = variables.input.split(" ", 1)[1]
         llm = self.config.lm_provider(**self.config.lm_provider_params)
+        llm = llm.with_structured_output(
+            UserQueryClassifier, 
+            output_parser=StrOutputParser()
+        )
         response = llm.invoke(prompt) # Gets the full AI message response
-        is_financial = response.content.lower() == 'true' # # Convert the string response to a boolean
 
         # If the message is finance-related, proceed with default handling
-        if is_financial:
+        if response.is_finance_related:  # type:ignore[union-attr]
             msg = variables.input.split(" ", 1)[1].strip()
             if msg:
                 # Call the agno_finance function to process the message
