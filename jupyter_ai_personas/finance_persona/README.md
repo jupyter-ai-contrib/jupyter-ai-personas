@@ -11,29 +11,9 @@ The Persona is packaged in a folder titled `finance_persona` as containing the f
 
 ## Set up
 
-Personas run with [Jupyter AI](https://github.com/jupyterlab/jupyter-ai), so if you have not installed it, do that first in its own environment. Here are the [installation instructions](https://jupyter-ai.readthedocs.io/en/v2/users/index.html#installation). 
+To install Personas, see the [instructions](https://github.com/jupyter-ai-contrib/jupyter-ai-personas/blob/main/README.md#installation).
 
-
-Install the personas repo as follows in the same virtual environment used for Jupyter AI:
-```
-git clone https://github.com/jupyter-ai-contrib/jupyter-ai-personas.git
-```
-
-The TOML file `jupyter_ai_personas/pyproject.toml` already contains the following line in the `project.entry-points."jupyter_ai.personas"` section, which enables the persona (delete any personas you do not want):
-
-```
-finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
-```
-
-Complete the installation by running
-```
-uv pip install -e .
-```
-
-or just
-```
-pip install -e .
-```
+Personas run with [Jupyter AI](https://github.com/jupyterlab/jupyter-ai), which is automatically installed with the instructions above. You can use Jupyter AI without Personas for many other applications, refer to the [documentation](https://jupyter-ai.readthedocs.io/en/v2/).
 
 
 ## API Keys
@@ -43,7 +23,7 @@ The use of this persona requires an API key from Financial Datasets. You can reg
 You can enter any API keys you need into the AI Settings page in Jupyter AI for any model related to that API key. Once you do this you can change models, but the API key remains stored until you delete it. This persona accesses the stored API keys automatically at run time. 
 
 Make sure you have API keys for the models used by Agno, see the code in `persona_finance.py` where the code used is based on OpenAI's `gpt-4.1` model:
-```py
+```python
 stock_price_agent = Agent(
             role="Get stock prices for a given date range.",
             model=OpenAIChat(id="gpt-4.1"),
