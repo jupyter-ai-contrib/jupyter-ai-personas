@@ -19,11 +19,11 @@ dependencies = [
     "duckduckgo-search",
     "matplotlib",
     "statsmodels",
+    "yfinance",
 ]
 
 [project.optional-dependencies]
 finance = [
-    "yfinance",
     "lancedb", 
     "tantivy", 
     "pypdf", 
