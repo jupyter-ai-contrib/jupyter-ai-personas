@@ -90,7 +90,7 @@ The system is implemented using:
 
 ## Usage
 
-The software team system is automatically available through the Jupyter AI extension in JupyterLab. It can be accessed through notebook cells and responds to user requests by coordinating its specialized team members.
+The software team system is automatically available through the Jupyter AI extension in JupyterLab. It can be accessed through Jupyter Chat and responds to user requests by coordinating its specialized team members.
 
 Example usage:
 ```python
