@@ -1,10 +1,10 @@
 [project]
 name = "jupyter-ai-personas"
 version = "0.1.0"
-description = "Add your description here"
+description = "Enhancing Jupyter AI with Personas"
 readme = "README.md"
 authors = [
-    { name = "Sanjiv Das", email = "srdas@scu.edu" }
+    { name = "S R Das", email = "srdas@scu.edu" }
 ]
 requires-python = ">=3.9"
 
