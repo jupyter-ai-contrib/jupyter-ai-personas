@@ -87,7 +87,6 @@ class FinancePersona(BasePersona):
         llm = self.config.lm_provider(**self.config.lm_provider_params)
         llm = llm.with_structured_output(
             UserQueryClassifier, 
-            output_parser=StrOutputParser()
         )
         response = llm.invoke(prompt) # Gets the full AI message response
 
