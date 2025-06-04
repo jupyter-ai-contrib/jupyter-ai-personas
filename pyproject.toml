@@ -14,15 +14,17 @@ dependencies = [
     "pandas",
     "scikit-learn",
     "scipy",
+    "mcp",
     "agno",
     "duckduckgo-search",
+    "matplotlib",
+    "statsmodels",
 ]
 
 [project.optional-dependencies]
 finance = [
     "yfinance",
     "lancedb", 
-    "mcp",
     "tantivy", 
     "pypdf", 
     "faiss-cpu",

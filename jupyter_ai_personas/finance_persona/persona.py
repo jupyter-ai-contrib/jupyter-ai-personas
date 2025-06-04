@@ -29,7 +29,7 @@ from .fd import FinancialDatasetsTools
 
 class UserQueryClassifier(BaseModel): 
     is_finance_related: bool = Field(
-      description="Returns True if the request is finance related, False otherwise."
+        description="Returns True if the request is finance related, False otherwise."
     )
 
 
@@ -48,7 +48,7 @@ def env_api_keys_from_config(API_KEY_NAME, file_path=DEFAULT_CONFIG_PATH):
         if key == API_KEY_NAME:
             fin_key = value
     return fin_key
-           
+
 
 class FinancePersona(BasePersona):
     """
@@ -148,7 +148,7 @@ class FinancePersona(BasePersona):
         arima_agent = Agent(
             role="Fit an ARIMA model to the stock prices and then forecast the prices for a specified period of time.",
             model=OpenAIChat(id="gpt-4.1"),
-            description="Agent to forecast stock pricea given time series price information for a ticker.",
+            description="Agent to forecast stock prices given time series price information for a ticker.",
             instructions="""
             For a given ticker, please collect the latest closing stock prices for the date range provided by using the `stock_price_agent`.
             Then, fit an ARIMA model to the close stock prices and then forecast the prices for a specified number of periods.
