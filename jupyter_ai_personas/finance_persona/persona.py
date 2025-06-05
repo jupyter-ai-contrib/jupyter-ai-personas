@@ -1,4 +1,5 @@
 from typing import Any
+from pydantic import Field, BaseModel
 
 from jupyterlab_chat.models import Message
 from langchain_core.output_parsers import StrOutputParser
@@ -26,6 +27,11 @@ import numpy as np
 
 from .fd import FinancialDatasetsTools
 
+class UserQueryClassifier(BaseModel): 
+    is_finance_related: bool = Field(
+        description="Returns True if the request is finance related, False otherwise."
+    )
+
 
 def env_api_keys_from_config(API_KEY_NAME, file_path=DEFAULT_CONFIG_PATH):
     """
@@ -43,15 +49,6 @@ def env_api_keys_from_config(API_KEY_NAME, file_path=DEFAULT_CONFIG_PATH):
             fin_key = value
     return fin_key
 
-
-_IS_FINANCIAL_PROMPT = """
-Please determine if the following message is related to finance.
-If so, respond with the boolean value True.
-If not, respond with the boolean value False.
-Do not respond with any other text or explanation.
-Message: 
-"""
-           
 
 class FinancePersona(BasePersona):
     """
@@ -86,13 +83,15 @@ class FinancePersona(BasePersona):
         )
 
         # Check if the prompt is about finance. If so, pass on to agentic workflow, else use default handling
-        prompt = _IS_FINANCIAL_PROMPT + variables.input.split(" ", 1)[1]
+        prompt = variables.input.split(" ", 1)[1]
         llm = self.config.lm_provider(**self.config.lm_provider_params)
+        llm = llm.with_structured_output(
+            UserQueryClassifier, 
+        )
         response = llm.invoke(prompt) # Gets the full AI message response
-        is_financial = response.content.lower() == 'true' # # Convert the string response to a boolean
 
         # If the message is finance-related, proceed with default handling
-        if is_financial:
+        if response.is_finance_related:  # type:ignore[union-attr]
             msg = variables.input.split(" ", 1)[1].strip()
             if msg:
                 # Call the agno_finance function to process the message
@@ -148,7 +147,7 @@ class FinancePersona(BasePersona):
         arima_agent = Agent(
             role="Fit an ARIMA model to the stock prices and then forecast the prices for a specified period of time.",
             model=OpenAIChat(id="gpt-4.1"),
-            description="Agent to forecast stock pricea given time series price information for a ticker.",
+            description="Agent to forecast stock prices given time series price information for a ticker.",
             instructions="""
             For a given ticker, please collect the latest closing stock prices for the date range provided by using the `stock_price_agent`.
             Then, fit an ARIMA model to the close stock prices and then forecast the prices for a specified number of periods.

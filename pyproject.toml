@@ -1,31 +1,47 @@
 [project]
 name = "jupyter-ai-personas"
 version = "0.1.0"
-description = "Add your description here"
+description = "Enhancing Jupyter AI with Personas"
 readme = "README.md"
 authors = [
-    { name = "Sanjiv Das", email = "srdas@scu.edu" }
+    { name = "S R Das", email = "srdas@scu.edu" }
 ]
 requires-python = ">=3.9"
+
 dependencies = [
-    "duckdb",
+    "jupyter_ai>=3.0.0a1"
+]
+
+[project.optional-dependencies]
+finance = [
+    "boto3",
+    "lancedb", 
+    "tantivy", 
+    "pypdf", 
     "faiss-cpu",
+    "duckdb",
     "numpy",
     "pandas",
     "scikit-learn",
     "scipy",
     "mcp",
     "agno",
-    "yfinance",
-    "lancedb", 
-    "tantivy", 
-    "pypdf", 
     "duckduckgo-search",
+    "matplotlib",
+    "statsmodels",
+    "yfinance",
+    "openai"
 ]
+emoji = [
+    "emoji",
+    "langchain-aws"
+]
+all = ["jupyter-ai-personas[finance,emoji]"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.entry-points."jupyter_ai.personas"]
-finance_persona = "jupyter_ai_personas.finance_persona.finance_persona:FinancePersona"
+finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
+emoji_persona = "jupyter_ai_personas.emoji_persona:EmojiPersona"
