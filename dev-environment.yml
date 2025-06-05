@@ -1,0 +1,7 @@
+name: jai-personas
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - nodejs=22
+  - jupyterlab

@@ -1,6 +1,6 @@
 # Software Team Persona for JupyterLab
 
-A sophisticated software development team system designed to enhance coding tasks in Jupyter notebooks through coordinated specialized agents. This system is part of the Jupyter AI extension and leverages AWS Bedrock's Claude model for intelligent task processing. This persona leverages AGno Teams conprising multiple Agno Agents.
+A sophisticated software development team system designed to enhance coding tasks in Jupyter notebooks through coordinated specialized agents. This system enhances the Jupyter AI extension and leverages AWS Bedrock models for intelligent task processing. This persona leverages Agno Teams conprising multiple Agno Agents. Agno is a full-stack framework for building Multi-Agent Systems with memory, knowledge and reasoning. [text](https://docs.agno.com/introduction)
 
 ## Architecture
 
@@ -50,11 +50,11 @@ graph TD
     E -.-> F
 ```
 
-- The **Planner** initiates the workflow by breaking down tasks
-- The **Coder** implements solutions based on the planner's specifications
-- The **Tester** validates the implementation
-- The **GitHub Specialist** manages version control and repository operations
-- The **File Manager** supports all team members with file system operations
+- The **Planner** initiates the workflow by breaking down tasks.
+- The **Coder** implements solutions based on the planner's specifications.
+- The **Tester** validates the implementation.
+- The **GitHub Specialist** manages version control and repository operations.
+- The **File Manager** supports all team members with file system operations.
 
 ## Features
 
@@ -94,16 +94,24 @@ The software team system is automatically available through the Jupyter AI exten
 
 Example usage:
 
+The system will automatically coordinate between team members to:
+ 1. Plan the implementation
+ 2. Write the code
+ 3. Test the solution
+ 4. Manage version control
+ 5. Handle file operations as needed
+
+### Example 1
+
 @SoftwareTeamPersona is my code correct + {CODE}
 
-```python
-# The system will automatically coordinate between team members to:
-# 1. Plan the implementation
-# 2. Write the code
-# 3. Test the solution
-# 4. Manage version control
-# 5. Handle file operations as needed
-```
+![Code Analysis](images/code_analysis.png)
+
+### Example 2
+
+@SoftwareTeamPersona can you help me create unit test for the code + {CODE}
+
+![Unit Test](images/unit_test.png) 
 
 ## Configuration
 

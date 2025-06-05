@@ -2,7 +2,7 @@ from jupyter_ai.personas.base_persona import BasePersona, PersonaDefaults
 from jupyterlab_chat.models import Message
 from jupyter_ai.history import YChatHistory
 from agno.agent import Agent
-from agno.models.aws import AwsBedrock, Claude
+from agno.models.aws import AwsBedrock
 import boto3
 from langchain_core.messages import HumanMessage
 from agno.team.team import Team
@@ -33,7 +33,7 @@ class SoftwareTeamPersona(BasePersona):
         
         planner = Agent(name="planner",
             role="Strategic planner who breaks down tasks into clear, actionable steps",
-            model=Claude(
+            model=AwsBedrock(
                 id=model_id,
                 session=session
             ),
@@ -47,7 +47,7 @@ class SoftwareTeamPersona(BasePersona):
 
         coder = Agent(name="coder",
             role="Expert programmer responsible for implementing solutions",
-            model=Claude(
+            model=AwsBedrock(
                 id=model_id,
                 session=session
             ),
@@ -63,7 +63,7 @@ class SoftwareTeamPersona(BasePersona):
 
         tester = Agent(name="tester",
             role="Quality assurance engineer focused on testing and validation",
-            model=Claude(
+            model=AwsBedrock(
                 id=model_id,
                 session=session
             ),
@@ -83,7 +83,7 @@ class SoftwareTeamPersona(BasePersona):
 
         gitHub = Agent(name="gitHub",
             role="GitHub operations specialist managing repository interactions",
-            model=Claude(
+            model=AwsBedrock(
                 id=model_id,
                 session=session
             ),
@@ -100,7 +100,7 @@ class SoftwareTeamPersona(BasePersona):
 
         fileManager = Agent(name="fileManager",
             role="File manager manages the local files, read and write.",
-            model=Claude(
+            model=AwsBedrock(
                 id=model_id,
                 session=session
             ),
@@ -117,7 +117,7 @@ class SoftwareTeamPersona(BasePersona):
             name="dev-team",
             mode="coordinate",
             members=[planner, coder, tester, gitHub, fileManager],
-            model=Claude(
+            model=AwsBedrock(
                 id=model_id,
                 session=session
             ),
