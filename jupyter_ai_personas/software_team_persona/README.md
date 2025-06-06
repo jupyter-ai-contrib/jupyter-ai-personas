@@ -71,11 +71,10 @@ graph TD
 
 ### Dependencies
 
-- AWS Bedrock (Claude model)
+- AWS Bedrock
 - boto3
 - langchain
 - agno
-- jinja2
 - jupyterlab_chat
 - jupyter_ai
 
@@ -85,12 +84,16 @@ The system is implemented using:
 - Team coordination through the `agno.team.Team` class
 - AWS Bedrock's Claude model for agent intelligence
 - Specialized tools for Python, File, and GitHub operations
-- Template-based prompt system using Jinja2
 - Message history tracking for context awareness
 
 ## Usage
 
 The software team system is automatically available through the Jupyter AI extension in JupyterLab. It can be accessed through Jupyter Chat and responds to user requests by coordinating its specialized team members.
+
+GitHub Access Token needs to be added to the environment for the GitHub Specialist agent to access the repository. Add it as an environment variable. 
+```bash
+export GITHUB_TOKEN="ghp_your_token_here"
+```
 
 The system will automatically coordinate between team members to:
  1. Plan the implementation

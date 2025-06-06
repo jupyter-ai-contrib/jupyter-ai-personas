@@ -42,7 +42,8 @@ class SoftwareTeamPersona(BasePersona):
                 "Analyze user requests and break them down into clear, manageable steps",
                 "Consider technical requirements, dependencies, and potential challenges"
             ],
-            markdown=True
+            markdown=True, 
+            show_tool_calls=True
         )
 
         coder = Agent(name="coder",
@@ -58,7 +59,8 @@ class SoftwareTeamPersona(BasePersona):
                 "Follow Python best practices and PEP 8 style guidelines"
             ],
             tools=[PythonTools()],
-            markdown=True
+            markdown=True, 
+            show_tool_calls=True
             )
 
         tester = Agent(name="tester",
@@ -78,7 +80,8 @@ class SoftwareTeamPersona(BasePersona):
                 "Test both positive and negative scenarios"
             ],
             tools=[PythonTools()],
-            markdown=True
+            markdown=True, 
+            show_tool_calls=True
         )
 
         gitHub = Agent(name="gitHub",
@@ -95,7 +98,8 @@ class SoftwareTeamPersona(BasePersona):
                 "Provide insights on repository metrics and activity patterns"
             ],
             tools=[GithubTools()],
-            markdown=True
+            markdown=True, 
+            show_tool_calls=True
         )
 
         fileManager = Agent(name="fileManager",
@@ -110,7 +114,8 @@ class SoftwareTeamPersona(BasePersona):
                 "Only write to a file when explicitly requested"
             ],
             tools=[ FileTools()],
-            markdown=True
+            markdown=True, 
+            show_tool_calls=True
         )
 
         dev_team = Team(
@@ -136,6 +141,7 @@ class SoftwareTeamPersona(BasePersona):
             show_members_responses=True,
             enable_agentic_context=True,
             add_datetime_to_instructions=True,
+            show_tool_calls=True
         )
         return dev_team
 
