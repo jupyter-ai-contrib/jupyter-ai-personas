@@ -36,7 +36,16 @@ emoji = [
     "emoji",
     "langchain-aws"
 ]
-all = ["jupyter-ai-personas[finance,emoji]"]
+
+pr_review = [
+    "agno",
+    "boto3",
+    "langchain",
+    "langchain-core",
+    "pygithub",
+    "unidiff"]
+
+all = ["jupyter-ai-personas[finance,emoji,pr_review]"]
 
 [build-system]
 requires = ["hatchling"]
@@ -44,4 +53,5 @@ build-backend = "hatchling.build"
 
 [project.entry-points."jupyter_ai.personas"]
 finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
-emoji_persona = "jupyter_ai_personas.emoji_persona:EmojiPersona"
+emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
+pr_review_persona = "jupyter_ai_personas.pr_review_persona.persona:PR_ReviewPersona"
