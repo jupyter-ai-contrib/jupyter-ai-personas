@@ -42,10 +42,15 @@ Or, just install required dependencies only:
 pip install -e .
 ```
 
-Or, install a specific persona, for example the `finance_persona`:
+Or, install a specific persona as:
 ```
-pip install -e ".[finance]"
+pip install -e ".[<optional-dependencies>]"
 ```
+| persona  | optional-dependencies |
+| :-------------: | :-------------: |
+| finance_persona | finance  |
+| emoji_persona  | emoji  |
+| software_team_persona  | software_team |
 
 ## Example: The Emoji Persona
 
