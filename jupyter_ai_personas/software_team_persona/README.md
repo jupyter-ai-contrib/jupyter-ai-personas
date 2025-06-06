@@ -1,6 +1,6 @@
 # Software Team Persona for JupyterLab
 
-A sophisticated software development team system designed to enhance coding tasks in Jupyter notebooks through coordinated specialized agents. This system enhances the Jupyter AI extension and leverages AWS Bedrock models for intelligent task processing. This persona leverages Agno Teams conprising multiple Agno Agents. Agno is a full-stack framework for building Multi-Agent Systems with memory, knowledge and reasoning. [text](https://docs.agno.com/introduction)
+A sophisticated software development team system designed to enhance coding tasks in Jupyter notebooks through coordinated specialized agents. This system enhances the Jupyter AI extension and leverages AWS Bedrock models for intelligent task processing. This persona leverages Agno Teams conprising multiple Agno Agents. [Agno](https://docs.agno.com/introduction) is a full-stack framework for building Multi-Agent Systems with memory, knowledge and reasoning. 
 
 ## Architecture
 
@@ -92,8 +92,6 @@ The system is implemented using:
 
 The software team system is automatically available through the Jupyter AI extension in JupyterLab. It can be accessed through Jupyter Chat and responds to user requests by coordinating its specialized team members.
 
-Example usage:
-
 The system will automatically coordinate between team members to:
  1. Plan the implementation
  2. Write the code
@@ -105,17 +103,50 @@ The system will automatically coordinate between team members to:
 
 @SoftwareTeamPersona is my code correct + {CODE}
 
+```python
+x = 10
+y = 0
+print("Addition:", x + y)
+print("Subtraction:", x - y)
+print("Multiplication:", x * y)
+print("Division:", x / y)
+```
+
 ![Code Analysis](images/code_analysis.png)
 
 ### Example 2
 
-@SoftwareTeamPersona can you help me create unit test for the code + {CODE}
+@SoftwareTeamPersona read the file test.py and give me unit test for these functions.
+
+```python
+def calculate_average(numbers):
+    """
+    Calculate the average of a list of numbers.
+    
+    Args:
+        numbers (list): A list of numbers
+    
+    Returns:
+        float: The average of the numbers
+    """
+
+    if not isinstance(numbers, list):
+        raise TypeError("Input must be a list")
+    
+    if len(numbers) == 0:
+        raise ValueError("Cannot calculate average of an empty list")
+    
+    if not all(isinstance(num, (int, float)) for num in numbers):
+        raise TypeError("All list elements must be numbers")
+    
+    return sum(numbers) / len(numbers)
+```
 
 ![Unit Test](images/unit_test.png) 
 
 ## Configuration
 
-The system uses AWS Bedrock's Claude model and requires appropriate AWS credentials and configuration. The model ID and other parameters can be configured through the Jupyter AI extension settings.
+The system uses AWS Bedrock models and requires appropriate AWS credentials and configuration. The model ID and other parameters can be configured through the Jupyter AI extension settings.
 
 ## Error Handling
 

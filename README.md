@@ -44,10 +44,10 @@ pip install -e .
 
 Or, install a specific persona, for example the `example_persona` as:
 ```
-pip install -e ".[example]"
+pip install -e ".[<optional-dependencies>]"
 ```
 | persona  | optional-dependencies |
-| ------------- | ------------- |
+| :-------------: | :-------------: |
 | finance_persona | finance  |
 | emoji_persona  | emoji  |
 | software_team_persona  | software_team |

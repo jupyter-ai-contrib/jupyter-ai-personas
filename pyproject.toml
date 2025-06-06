@@ -38,12 +38,13 @@ emoji = [
 ]
 
 software_team = [ 
-    "agno[aws,tools]>=0.1.0",
+    "agno",
     "boto3",
     "langchain",
-    "langchain-core"]
+    "langchain-core",
+    "pygithub"]
 
-all = ["jupyter-ai-personas[finance,emoji,software]"]
+all = ["jupyter-ai-personas[finance,emoji,software_team]"]
 
 [build-system]
 requires = ["hatchling"]
@@ -51,5 +52,5 @@ build-backend = "hatchling.build"
 
 [project.entry-points."jupyter_ai.personas"]
 finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
-emoji_persona = "jupyter_ai_personas.emoji_persona:EmojiPersona"
+emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
 software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
