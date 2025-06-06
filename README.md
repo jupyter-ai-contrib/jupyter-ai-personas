@@ -42,7 +42,7 @@ Or, just install required dependencies only:
 pip install -e .
 ```
 
-Or, install a specific persona, for example the `example_persona` as:
+Or, install a specific persona as:
 ```
 pip install -e ".[<optional-dependencies>]"
 ```
