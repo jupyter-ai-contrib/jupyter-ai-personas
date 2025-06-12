@@ -1,4 +1,3 @@
-
 import os
 from jupyter_ai.personas.base_persona import BasePersona, PersonaDefaults
 from jupyterlab_chat.models import Message
@@ -6,13 +5,12 @@ from jupyter_ai.history import YChatHistory
 from agno.agent import Agent
 from agno.models.aws import AwsBedrock
 import boto3
-from .pr_tools import PRTools
 from agno.tools.github import GithubTools
 from agno.tools.reasoning import ReasoningTools
 from langchain_core.messages import HumanMessage
 from agno.tools.python import PythonTools
 from agno.team.team import Team
-
+from .ci_tools import CITools
 from .template import PRPersonaVariables, PR_PROMPT_TEMPLATE
 
 session = boto3.Session()
@@ -45,19 +43,26 @@ class PR_ReviewPersona(BasePersona):
                 session=session
             ),
             markdown=True,
-            instructions=[ "use PRTools to get PR data"
+            instructions=[ "use GithubTools to get PR data"
                 "Analyze code changes for quality and best practices:",
                 "1. Review code style and consistency",
                 "2. Check for code smells and anti-patterns using PylintTools" ,
                 "3. Evaluate code complexity and readability",
                 "4. Assess performance implications",
                 "5. Verify error handling and edge cases",
+                "6. Analyze CI failures:",
+                "   - Use CITools to fetch and analyze CI failure data",
+                "   - Review failure logs to identify issues",
+                "   - Provide code recommendations based on failures",
+                "   - You can fetch CI logs from GitHub and store them using fetch_ci_failure_data function",
+                "   - use get_ci_logs to access the logs from memory.",
                 system_prompt
             ],
             tools=[
                 PythonTools(),
-                PRTools(),
-                GithubTools(),
+                # PRTools(),
+                GithubTools( get_pull_requests= True, get_pull_request_changes= True, create_pull_request_comment= True ),
+                CITools(),
                 ReasoningTools(add_instructions=True, think=True, analyze=True)
             ]
         )
@@ -106,11 +111,12 @@ class PR_ReviewPersona(BasePersona):
                 "Monitor and analyze GitHub repository activities and changes",
                 "Fetch and process pull request data",
                 "Analyze code changes and provide structured feedback",
+                "Create a comment on a specific line of a specific file in a pull request.",
                 "Note: Requires a valid GitHub personal access token in GITHUB_TOKEN environment variable"
             ],
             tools=[
-                GithubTools(),
-                PRTools()
+                GithubTools( create_pull_request_comment= True, get_pull_requests= True, get_pull_request_changes= True),
+                # PRTools()
             ],
             markdown=True
         )
@@ -131,8 +137,7 @@ class PR_ReviewPersona(BasePersona):
                 "3. Security Analyst identifies potential vulnerabilities",
                 "4. GitHub Specialist manages repository operations",
                 "5. Synthesize findings into a comprehensive review",
-                "6. Provide actionable recommendations",
-                "7. Consider overall project context and goals",
+                # "6. Provide inline comments for each finding.",
                 "Chat history: " + system_prompt
             ],
             markdown=True,
@@ -140,8 +145,7 @@ class PR_ReviewPersona(BasePersona):
             enable_agentic_context=True,
             add_datetime_to_instructions=True,
             tools=[
-                PRTools(),
-                GithubTools(),
+                GithubTools( create_pull_request_comment= True, get_pull_requests= True, get_pull_request_changes= True),
                 ReasoningTools(add_instructions=True, think=True, analyze=True)
             ]
         )
