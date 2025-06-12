@@ -64,12 +64,11 @@ graph TD
 
 ### Dependencies
 
-- AWS Bedrock
-- boto3
-- langchain
-- agno
-- jupyterlab_chat
-- jupyter_ai
+- AWS credentials must be properly configured
+- GitHub Access Token needs to be added to the environment for the GitHub Specialist agent to access the repository. Add it as an environment variable. 
+```bash
+export GITHUB_TOKEN="ghp_your_token_here"
+```
 
 ### Implementation
 
@@ -80,11 +79,6 @@ The system is implemented using:
 - Message history tracking for context awareness
 
 ## Usage
-
-GitHub Access Token needs to be added to the environment for the GitHub Specialist agent to access the repository. Add it as an environment variable. 
-```bash
-export GITHUB_TOKEN="ghp_your_token_here"
-```
 
 The system will automatically coordinate between team members to:
 1. Analyze the PR changes and their impact
@@ -116,6 +110,4 @@ The system implements comprehensive error handling:
 ## Security Considerations
 
 - File operations are restricted to explicit user requests
-- GitHub operations require proper authentication
-- AWS credentials must be properly configured
 - System operates within JupyterLab security context

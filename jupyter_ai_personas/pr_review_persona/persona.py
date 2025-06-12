@@ -15,7 +15,7 @@ from .template import PRPersonaVariables, PR_PROMPT_TEMPLATE
 
 session = boto3.Session()
 
-class PR_ReviewPersona(BasePersona):
+class PRReviewPersona(BasePersona):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -23,7 +23,7 @@ class PR_ReviewPersona(BasePersona):
     @property
     def defaults(self):
         return PersonaDefaults(
-            name="PR_ReviewPersona",
+            name="PRReviewPersona",
             avatar_path="/api/ai/static/jupyternaut.svg",
             description="A specialized assistant for reviewing pull requests and providing detailed feedback.",
             system_prompt="You are a PR reviewer assistant that helps analyze code changes, provide feedback, and ensure code quality.",
@@ -101,7 +101,7 @@ class PR_ReviewPersona(BasePersona):
             markdown=True
         )
 
-        gitHub = Agent(name="gitHub",
+        gitHub = Agent(name="github",
             role="GitHub Specialist",
             model=AwsBedrock(
                 id=model_id,
