@@ -9,10 +9,10 @@ from agno.agent import Agent
 
 class CITools(Toolkit):
     def __init__(self, **kwargs):
-        self.github_token = os.getenv("GITHUB_TOKEN")
+        self.github_token = os.getenv("GITHUB_ACCESS_TOKEN")
 
         if not self.github_token:
-            logger.warning("GITHUB_TOKEN environment variable is not set. GitHub operations will be limited.")
+            logger.warning("GITHUB_ACCESS_TOKEN environment variable is not set. GitHub operations will be limited.")
         super().__init__(name="ci_tools", tools=[
             self.fetch_ci_failure_data,
             self.get_ci_logs
@@ -31,11 +31,8 @@ class CITools(Toolkit):
             list: List of failure data containing job name, id and log information
         """
 
-        if "api.github.com" in repo_url:
+        if "github.com" in repo_url:
             match = re.search(r"github\.com/([^/]+)/([^/]+)", repo_url)
-        #     match = re.search(r"api\.github\.com/repos/([^/]+)/([^/]+)", repo_url)
-        # else:
-            
             
         if not match:
             raise ValueError("Invalid GitHub URL format. Expected either github.com/owner/repo or api.github.com/repos/owner/repo")
@@ -43,8 +40,7 @@ class CITools(Toolkit):
         owner, repo_name = match.groups()
         repo_name = f"{owner}/{repo_name}"
 
-        g = Github(os.getenv("GITHUB_TOKEN"))
-        print(os.getenv("GITHUB_TOKEN"))
+        g = Github(os.getenv("GITHUB_ACCESS_TOKEN"))
         repo = g.get_repo(repo_name)
         pr_data = repo.get_pull(pr_number)
 
@@ -66,26 +62,33 @@ class CITools(Toolkit):
 
                         job_id = job.raw_data["id"]
                         
-                        try:
-                            log_content = job.get_logs()
-                        except Exception as e:
 
-                            headers = {
-                                "Accept": "application/vnd.github+json",
-                                "Authorization": f"Bearer {self.github_token}",
-                                "X-GitHub-Api-Version": "2022-11-28"
-                            }
-                            log_url = f"https://api.github.com/repos/{repo_name}/actions/jobs/{job_id}/logs"
-                            log_response = requests.get(log_url, headers=headers)
-                            
-                            if log_response.status_code != 200:
-                                raise Exception(f"Failed to fetch logs: {log_response.status_code} {log_response.text} from {log_url}")
-                            log_content = log_response.text
+                        headers = {
+                            "Accept": "application/vnd.github+json",
+                            "Authorization": f"Bearer {self.github_token}",
+                            "X-GitHub-Api-Version": "2022-11-28"
+                        }
+                        log_url = f"https://api.github.com/repos/{repo_name}/actions/jobs/{job_id}/logs"
+                        log_response = requests.get(log_url, headers=headers)
+                        
+                        if log_response.status_code != 200:
+                            raise Exception(f"Failed to fetch logs: {log_response.status_code} {log_response.text} from {log_url}")
+                        log_content = log_response.text
 
+                        # # Extract key error lines from the log
+                        # log_lines = log_content.splitlines()
+                        # error_lines = []
+                        # for line in log_lines[-20:]:  
+                        #     if 'error:' in line.lower() or 'fail:' in line.lower():
+                        #         error_lines.append(line)
+                        #         if len(error_lines) >= 10: 
+                        #             break
+                        
                         failure_data = {
                             "name": job.name,
                             "id": job_id,
-                            "log": log_content,
+                            # "error_lines": error_lines if error_lines else [log_lines[-1]],  
+                            #"log": log_content
                         }
                         failures.append(failure_data)
 

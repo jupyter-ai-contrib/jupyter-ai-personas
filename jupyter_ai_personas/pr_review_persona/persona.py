@@ -32,9 +32,9 @@ class PRReviewPersona(BasePersona):
 
     def initialize_team(self, system_prompt):
         model_id = self.config.lm_provider_params["model_id"]
-        github_token = os.getenv("GITHUB_TOKEN")
+        github_token = os.getenv("GITHUB_ACCESS_TOKEN")
         if not github_token:
-            raise ValueError("GITHUB_TOKEN environment variable is not set. Please set it with a plain GitHub personal access token (not GitHub Actions syntax).")
+            raise ValueError("GITHUB_ACCESS_TOKEN environment variable is not set. Please set it with a plain GitHub personal access token (not GitHub Actions syntax).")
 
         code_quality = Agent(name="code_quality",
             role="Code Quality Analyst",
@@ -43,20 +43,26 @@ class PRReviewPersona(BasePersona):
                 session=session
             ),
             markdown=True,
-            instructions=[ "use GithubTools to get PR data"
-                "Analyze code changes for quality and best practices:",
-                "1. Review code style and consistency",
-                "2. Check for code smells and anti-patterns using PylintTools" ,
-                "3. Evaluate code complexity and readability",
-                "4. Assess performance implications",
-                "5. Verify error handling and edge cases",
-                "6. Analyze CI failures:",
-                "   - Use CITools to fetch and analyze CI failure data",
-                "   - Review failure logs to identify issues",
-                "   - Provide code recommendations based on failures",
-                "   - You can fetch CI logs from GitHub and store them using fetch_ci_failure_data function",
-                "   - use get_ci_logs to access the logs from memory.",
-                system_prompt
+            instructions=[
+                "You have access to CITools for analyzing CI failures. Always:",
+                
+                "1. Get repository and PR information:",
+                "   - Extract repo URL and PR number from the request",
+                "   - Use GithubTools to fetch PR details",
+                
+                "2. Check CI failures using CITools:",
+                "   - Call fetch_ci_failure_data with repo_url and pr_number",
+                "   - Use get_ci_logs to analyze any failures found",
+                "   - If failures exist, analyze error messages and logs",
+                
+                "3. Review code quality:",
+                "   - Code style and consistency",
+                "   - Code smells and anti-patterns",
+                "   - Complexity and readability",
+                "   - Performance implications",
+                "   - Error handling and edge cases",
+                
+                "Always include CI analysis in your response, whether failures are found or not.",
             ],
             tools=[
                 PythonTools(),
@@ -112,7 +118,7 @@ class PRReviewPersona(BasePersona):
                 "Fetch and process pull request data",
                 "Analyze code changes and provide structured feedback",
                 "Create a comment on a specific line of a specific file in a pull request.",
-                "Note: Requires a valid GitHub personal access token in GITHUB_TOKEN environment variable"
+                "Note: Requires a valid GitHub personal access token in GITHUB_ACCESS_TOKEN environment variable"
             ],
             tools=[
                 GithubTools( create_pull_request_comment= True, get_pull_requests= True, get_pull_request_changes= True),
@@ -132,12 +138,29 @@ class PRReviewPersona(BasePersona):
             ),
             instructions=[
                 "Coordinate PR review process with specialized team members:",
-                "1. Code Quality Analyst reviews code structure and patterns",
-                "2. Documentation Specialist ensures comprehensive documentation",
-                "3. Security Analyst identifies potential vulnerabilities",
-                "4. GitHub Specialist manages repository operations",
-                "5. Synthesize findings into a comprehensive review",
-                # "6. Provide inline comments for each finding.",
+                
+                "1. Code Quality Analyst:",
+                "   - Review code structure and patterns",
+                "   - Check CI status and analyze any failures",
+                "   - Keep analysis focused and concise",
+                
+                "2. Documentation Specialist:",
+                "   - Review documentation completeness",
+                "   - Focus on critical documentation issues",
+                
+                "3. Security Analyst:",
+                "   - Check for security vulnerabilities",
+                "   - Prioritize high-impact issues",
+                
+                "4. GitHub Specialist:",
+                "   - Manage repository operations",
+                "   - Keep PR metadata minimal",
+                
+                "5. Synthesize findings:",
+                "   - Combine key insights from all members",
+                "   - Focus on actionable items",
+                "   - Keep responses concise",
+                
                 "Chat history: " + system_prompt
             ],
             markdown=True,
@@ -177,13 +200,34 @@ class PRReviewPersona(BasePersona):
         system_prompt = PR_PROMPT_TEMPLATE.format_messages(**variables.model_dump())[0].content
         team = self.initialize_team(system_prompt)
         
-        response = team.run(message.body, 
-                            stream=False,
-                            stream_intermediate_steps=True,
-                            show_full_reasoning=True,)
+        try:
+            response = team.run(message.body, 
+                              stream=False,
+                              stream_intermediate_steps=True,
+                              show_full_reasoning=True)
 
-        response = response.content
-        async def response_iterator():
-            yield response
-        
-        await self.stream_message(response_iterator())
+            response = response.content
+            async def response_iterator():
+                yield response
+            
+            await self.stream_message(response_iterator())
+            
+            # self._cleanup_temp_files()
+        except ValueError as e:
+            error_message = f"Configuration Error: {str(e)}\nThis may be due to missing or invalid environment variables, model configuration, or input parameters."
+            async def error_iterator():
+                yield error_message
+            await self.stream_message(error_iterator())
+            self._cleanup_temp_files() 
+        except boto3.exceptions.Boto3Error as e:
+            error_message = f"AWS Connection Error: {str(e)}\nThis may be due to invalid AWS credentials or network connectivity issues."
+            async def error_iterator():
+                yield error_message
+            await self.stream_message(error_iterator())
+            self._cleanup_temp_files() 
+        except Exception as e:
+            error_message = f"PR Review Error ({type(e).__name__}): {str(e)}\nAn unexpected error occurred while the PR review team was analyzing your request."
+            async def error_iterator():
+                yield error_message
+            await self.stream_message(error_iterator())
+            self._cleanup_temp_files()  
