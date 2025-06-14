@@ -67,7 +67,7 @@ graph TD
 - AWS credentials must be properly configured
 - GitHub Access Token needs to be added to the environment for the GitHub Specialist agent to access the repository. Add it as an environment variable. 
 ```bash
-export GITHUB_TOKEN="ghp_your_token_here"
+export GITHUB_ACCESS_TOKEN="ghp_your_token_here"
 ```
 
 ### Implementation

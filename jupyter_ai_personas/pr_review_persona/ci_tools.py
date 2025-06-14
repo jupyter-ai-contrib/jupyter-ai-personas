@@ -75,6 +75,8 @@ class CITools(Toolkit):
                             raise Exception(f"Failed to fetch logs: {log_response.status_code} {log_response.text} from {log_url}")
                         log_content = log_response.text
 
+                        ##If seeing ThrottlingException in test aws account uncomment these lines [81-87] and line  92 AND comment line 93
+
                         # # Extract key error lines from the log
                         # log_lines = log_content.splitlines()
                         # error_lines = []
@@ -88,7 +90,7 @@ class CITools(Toolkit):
                             "name": job.name,
                             "id": job_id,
                             # "error_lines": error_lines if error_lines else [log_lines[-1]],  
-                            #"log": log_content
+                            "log": log_content
                         }
                         failures.append(failure_data)
 
