@@ -27,17 +27,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pytest pytest-asyncio
-        pip install -e ".[pr_review]"
-        
-    - name: Create conftest.py to patch problematic methods
-      run: |
-        mkdir -p jupyter_ai_personas/pr_review_persona
-        echo 'import pytest' > jupyter_ai_personas/pr_review_persona/conftest.py
-        echo 'from unittest.mock import patch' >> jupyter_ai_personas/pr_review_persona/conftest.py
-        echo '@pytest.fixture(autouse=True, scope="session")' >> jupyter_ai_personas/pr_review_persona/conftest.py
-        echo 'def patch_persona_awareness():' >> jupyter_ai_personas/pr_review_persona/conftest.py
-        echo '    with patch("jupyter_ai.personas.persona_awareness.PersonaAwareness._start_heartbeat", return_value=None):' >> jupyter_ai_personas/pr_review_persona/conftest.py
-        echo '        yield' >> jupyter_ai_personas/pr_review_persona/conftest.py
+        pip install -e "."
         
     - name: Run tests
       run: |
