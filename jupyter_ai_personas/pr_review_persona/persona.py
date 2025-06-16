@@ -230,4 +230,4 @@ class PRReviewPersona(BasePersona):
             async def error_iterator():
                 yield error_message
             await self.stream_message(error_iterator())
-            self._cleanup_temp_files()  
+            # self._cleanup_temp_files()  
