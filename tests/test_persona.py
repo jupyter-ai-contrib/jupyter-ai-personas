@@ -14,7 +14,7 @@ class AwaitableAsyncMock(AsyncMock):
         return await super().__call__(*args, **kwargs)
 
 @pytest.fixture
-async def pr_persona(event_loop):
+async def pr_persona():
     # Mock initialization arguments
     mock_ychat = AsyncMock()
     mock_manager = AsyncMock()
