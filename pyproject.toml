@@ -41,10 +41,16 @@ software_team = [
     "agno",
     "boto3",
     "langchain",
-    "langchain-core",
-    "pygithub"]
+   ]
 
-all = ["jupyter-ai-personas[finance,emoji,software_team]"]
+
+pr_review = [
+    "agno",
+    "boto3",
+    "pygithub",
+    ]
+
+all = ["jupyter-ai-personas[finance,emoji,software_team,pr_review]"]
 
 [build-system]
 requires = ["hatchling"]
@@ -52,5 +58,7 @@ build-backend = "hatchling.build"
 
 [project.entry-points."jupyter_ai.personas"]
 finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
-emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
+emoji_persona = "jupyter_ai_personas.emoji_persona.persona.persona:EmojiPersona"
 software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
+
+pr_review_persona = "jupyter_ai_personas.pr_review_persona.persona:PRReviewPersona"
