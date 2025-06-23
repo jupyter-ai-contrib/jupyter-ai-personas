@@ -31,7 +31,7 @@ async def test_init_with_token():
 @pytest.mark.asyncio
 async def test_fetch_ci_failure_data_invalid_url(ci_tools, mock_agent):
     with pytest.raises(ValueError) as exc_info:
-        await ci_tools.fetch_ci_failure_data(mock_agent, "invalid_url", 123)
+        ci_tools.fetch_ci_failure_data(mock_agent, "invalid_url", 123)
     assert "Invalid GitHub URL format" in str(exc_info.value)
 
 @patch('github.Requester.Requester.requestJsonAndCheck')
@@ -47,7 +47,7 @@ async def test_fetch_ci_failure_data_no_failures(mock_request, ci_tools, mock_ag
     
     # Set GitHub token and execute test
     ci_tools.github_token = 'dummy_token'
-    failures = await ci_tools.fetch_ci_failure_data(mock_agent, "github.com/owner/repo", 123)
+    failures = ci_tools.fetch_ci_failure_data(mock_agent, "github.com/owner/repo", 123)
     assert len(failures) == 0
     assert "ci_logs" not in mock_agent.session_state
 
@@ -70,7 +70,7 @@ async def test_fetch_ci_failure_data_with_failures(mock_request, ci_tools, mock_
 
     ci_tools.github_token = 'dummy_token'
     with patch('requests.get', return_value=mock_response):
-        failures = await ci_tools.fetch_ci_failure_data(mock_agent, "github.com/owner/repo", 123)
+        failures = ci_tools.fetch_ci_failure_data(mock_agent, "github.com/owner/repo", 123)
         
         assert len(failures) == 1
         assert failures[0]["name"] == "test_job"
@@ -81,7 +81,7 @@ async def test_fetch_ci_failure_data_with_failures(mock_request, ci_tools, mock_
 @pytest.mark.asyncio
 async def test_get_ci_logs_no_state(ci_tools, mock_agent):
     mock_agent.session_state = None
-    logs = await ci_tools.get_ci_logs(mock_agent)
+    logs = ci_tools.get_ci_logs(mock_agent)
     assert logs == []
 
 @pytest.mark.asyncio
@@ -92,7 +92,7 @@ async def test_get_ci_logs_with_filter(ci_tools, mock_agent):
             {"name": "job2", "log": "error2"}
         ]
     }
-    logs = await ci_tools.get_ci_logs(mock_agent, "job1")
+    logs = ci_tools.get_ci_logs(mock_agent, "job1")
     assert len(logs) == 1
     assert logs[0]["name"] == "job1"
 
@@ -104,5 +104,5 @@ async def test_get_ci_logs_without_filter(ci_tools, mock_agent):
             {"name": "job2", "log": "error2"}
         ]
     }
-    logs = await ci_tools.get_ci_logs(mock_agent)
+    logs = ci_tools.get_ci_logs(mock_agent)
     assert len(logs) == 2

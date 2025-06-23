@@ -18,7 +18,7 @@ class CITools(Toolkit):
             self.get_ci_logs
         ],  **kwargs)
 
-    async def fetch_ci_failure_data(self, agent: Agent,  repo_url: str, pr_number: int) -> list:
+    def fetch_ci_failure_data(self, agent: Agent,  repo_url: str, pr_number: int) -> list:
         """
         Fetch CI Failure data from GitHub API and store it in the agent's session state.
         
@@ -104,7 +104,7 @@ class CITools(Toolkit):
         print(f"Found {len(failures)} failed jobs")
         return failures
 
-    async def get_ci_logs(self, agent: Agent, job_name: str = None) -> list:
+    def get_ci_logs(self, agent: Agent, job_name: str = None) -> list:
         """
         Retrieve CI failure logs from agent's session state.
         
