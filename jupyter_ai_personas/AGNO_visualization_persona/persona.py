@@ -1,16 +1,20 @@
-from jupyter_ai.personas.base_persona import BasePersona, PersonaDefaults
-from jupyterlab_chat.models import Message
-from jupyter_ai.history import YChatHistory
-from agno.agent import Agent
-from agno.models.aws import AwsBedrock
-import boto3
-from langchain_core.messages import HumanMessage
-from agno.team.team import Team
-from agno.tools.python import PythonTools
-from agno.tools.pandas import PandasTools
 import os
 import re
 import logging
+import boto3
+import datetime
+from pathlib import Path
+from jupyter_ai.personas.base_persona import BasePersona, PersonaDefaults
+from jupyterlab_chat.models import Message
+from jupyter_ai.history import YChatHistory
+
+from langchain_core.messages import HumanMessage
+from agno.agent import Agent
+from agno.models.aws import AwsBedrock
+from agno.team.team import Team
+from agno.tools.python import PythonTools
+from agno.tools.pandas import PandasTools
+from .enhancedPythonTools import ImprovedPythonTools
 
 # Configure logging for better debugging
 logging.basicConfig(level=logging.INFO)
@@ -19,14 +23,16 @@ logger = logging.getLogger(__name__)
 # Initialize AWS session with error handling
 try:
     session = boto3.Session()
-    # Verify AWS credentials are available
     session.get_credentials()
 except Exception as e:
     logger.error(f"AWS credentials not configured: {e}")
     session = None
 
-# Define consistent single directory for all files
-SESSION_DIR = "session_visualizer"
+def create_timestamped_session_dir():
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"session_{timestamp}"
+
+SESSION_DIR = create_timestamped_session_dir()
 
 class VisualizationAssistant(BasePersona):
 
@@ -70,42 +76,47 @@ class VisualizationAssistant(BasePersona):
                 f"import re",
                 f"SESSION_DIR = r'{abs_session_dir}'",
                 f"os.makedirs(SESSION_DIR, exist_ok=True)",
+                f"print(f'Session directory created/verified: {{SESSION_DIR}}')",
+                f"print(f'Current working directory before change: {{os.getcwd()}}')",
                 f"os.chdir(SESSION_DIR)",
                 f"print(f'Working in directory: {{os.getcwd()}}')",
+                f"print(f'Files in session directory: {{os.listdir(\".\")}}')",
                 "",
-                "CRITICAL: The user's input data will be provided in the message. You MUST extract and use ONLY the user's actual data.",
-                "DO NOT CREATE SYNTHETIC DATA. DO NOT GENERATE FAKE DATA. USE ONLY THE USER'S PROVIDED DATA.",
+                "NEVER CREATE SYNTHETIC DATA, use ONLY the user's provided data - NO exceptions",
                 "",
-                "DATA EXTRACTION PROCESS:",
-                "1. First, print the entire user message to understand what data was provided",
-                "2. Look for these data patterns in the user's message:",
-                "   - DataFrame creation: df = pd.DataFrame(...)",
-                "   - Dictionary data: data = {...} or records = [...]", 
-                "   - CSV text: comma-separated values in text format",
-                "   - List/array data: [1,2,3] or similar structures",
-                "   - JSON data: {...} objects",
-                "3. Extract ONLY the data-creation code, ignore imports/prints/comments",
-                "4. Execute the extracted data code to create the DataFrame",
-                "5. If user provides raw CSV text, use pd.read_csv(io.StringIO(csv_text))",
+                "MANDATORY DATA EXTRACTION:",
+                "1. Print the ENTIRE user message first: print('USER MESSAGE:', message_text)",
+                "2. Look ONLY for actual data in the message - no creation of new data",
+                "3. Extract data patterns EXACTLY as provided:",
+                "   - DataFrame creation: df = pd.DataFrame(...) [extract exact values]",
+                "   - Dictionary data: data = {...} [extract exact structure]", 
+                "   - CSV text: comma-separated values [extract exact text]",
+                "   - List/array data: [1,2,3] [extract exact values]",
+                "4. Execute ONLY the extracted user data code",
+                "5. NEVER add, modify, or supplement the user's data",
                 "",
-                "EXAMPLES:",
-                "- From: 'import pandas as pd\\ndf = pd.DataFrame({\"x\": [1,2,3]})\\nprint(df)'",
-                "  Extract: 'df = pd.DataFrame({\"x\": [1,2,3]})'",
+                "EXTRACTION EXAMPLES (use exact user values):",
+                "- From: 'df = pd.DataFrame({\"x\": [1,2,3], \"y\": [4,5,6]})'",
+                "  Extract: df = pd.DataFrame({\"x\": [1,2,3], \"y\": [4,5,6]}) [EXACT SAME]",
                 "- From raw CSV: 'name,age\\nJohn,25\\nJane,30'",
-                "  Use: pd.read_csv(io.StringIO('name,age\\nJohn,25\\nJane,30'))",
+                "  Use: pd.read_csv(io.StringIO('name,age\\nJohn,25\\nJane,30')) [EXACT SAME]",
                 "",
-                "AFTER EXTRACTING USER DATA:",
-                "- Verify the DataFrame was created: print(f'DataFrame shape: {df.shape}')",
-                "- Show first few rows: print(df.head())",
-                "- Perform comprehensive EDA on the USER'S ACTUAL DATA",
-                "- MANDATORY: Save the user's data: df.to_csv('extracted_data.csv', index=False)",
-                "- Verify file creation: print(f'File exists: {os.path.exists(\"extracted_data.csv\")}')",
-                "- List files: print(f'Files in directory: {os.listdir(\".\")}') ",
+                "CRITICAL FILE SAVING - Use absolute path to prevent duplicates:",
+                f"extracted_data_path = os.path.join(r'{abs_session_dir}', 'extracted_data.csv')",
+                "df.to_csv(extracted_data_path, index=False)",
+                "print(f'User data saved to: {extracted_data_path}')",
+                "print(f'File exists at correct location: {os.path.exists(extracted_data_path)}')",
+                "print(f'File size: {os.path.getsize(extracted_data_path)} bytes')",
                 "",
-                "If you cannot find any data in the user's message, ask them to provide data before proceeding.",
-                "DO NOT make up data. DO NOT use sample/synthetic data."
+                "Coordinate a data analysis workflow: Extract → Clean → Generate → Visualize",
+                f"All files must be saved to: {abs_session_dir}",
+                "Each agent depends on the previous agent's output",
+                "Provide insights and findings throughout the process",
+                "NEVER generate random or sample data",
+                "",
+                "ONLY proceed if user provided actual data to extract"
             ],
-            tools=[PythonTools(), PandasTools()],
+            tools=[ImprovedPythonTools(session_dir=abs_session_dir), PandasTools()],
             markdown=True,
             show_tool_calls=True
         )
@@ -118,6 +129,7 @@ class VisualizationAssistant(BasePersona):
                 "CRITICAL: Start every task by running this setup code:",
                 f"import os",
                 f"import pandas as pd",
+                f"import numpy as np",
                 f"SESSION_DIR = r'{abs_session_dir}'",
                 f"os.makedirs(SESSION_DIR, exist_ok=True)",
                 f"os.chdir(SESSION_DIR)",
@@ -126,98 +138,85 @@ class VisualizationAssistant(BasePersona):
                 "FIRST: Check if extracted_data.csv exists: print(f'extracted_data.csv exists: {os.path.exists(\"extracted_data.csv\")}')",
                 "If file doesn't exist, report error and ask EDA agent to extract data first",
                 "Load the extracted data: df = pd.read_csv('extracted_data.csv')",
-                "Clean and preprocess the data (handle missing values, duplicates, outliers)",
-                "Standardize column names and data formats",
-                "Perform data type conversions as needed",
-                "Handle categorical encoding if necessary",
-                "MANDATORY: Save cleaned data: df.to_csv('cleaned_data.csv', index=False)",
-                "Verify file creation: print(f'cleaned_data.csv exists: {os.path.exists(\"cleaned_data.csv\")}')",
-                "List files: print(f'Files in directory: {os.listdir(\".\")}') ",
-                "Document all preprocessing steps taken",
-                "Ensure data quality and consistency",
-                "Use pandas for efficient data cleaning and transformation operations",
-                "Handle errors gracefully and report if preprocessing fails"
+                "",
+                "SIMPLIFIED COLUMN STANDARDIZATION:",
+                "print(f'Original columns: {list(df.columns)}')",
+                "df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_').str.replace('-', '_')",
+                "print(f'Standardized columns: {list(df.columns)}')",
+                "",
+                "BASIC DATA CLEANING:",
+                "df = df.dropna().drop_duplicates()",
+                "print(f'Cleaned data shape: {df.shape}')",
+                "",
+                "SAVE CLEANED DATA:",
+                "df.to_csv('cleaned_data.csv', index=False)",
+                "print(f'cleaned_data.csv exists: {os.path.exists(\"cleaned_data.csv\")}')",
+                "",
+                "SAVE SIMPLE COLUMN INFO (NO JSON SERIALIZATION ISSUES):",
+                "with open('column_info.txt', 'w') as f:",
+                "    f.write(f'columns: {list(df.columns)}\\n')",
+                "    f.write(f'shape: {list(df.shape)}\\n')",
+                "    f.write(f'numeric: {list(df.select_dtypes(include=[\"number\"]).columns)}\\n')",
+                "    f.write(f'text: {list(df.select_dtypes(include=[\"object\"]).columns)}\\n')",
+                "print('Column info saved to column_info.txt')",
+                "",
+                "print(f'Files in directory: {os.listdir(\".\")}') ",
+                "Document all preprocessing steps taken"
             ],
-            tools=[PythonTools(), PandasTools()],
+            tools=[ImprovedPythonTools(session_dir=abs_session_dir), PandasTools()],
             markdown=True,
             show_tool_calls=True
         )
 
         code_generator_agent = Agent(
             name="code_generator_agent",
-            role="Visualization code generator who creates plot and analysis code",
+            role="Visualization code generator",
             model=AwsBedrock(id=model_id, session=session),
             instructions=[
                 "CRITICAL: Start every task by running this setup code:",
                 f"import os",
                 f"import pandas as pd",
+                f"import numpy as np",
                 f"SESSION_DIR = r'{abs_session_dir}'",
                 f"os.makedirs(SESSION_DIR, exist_ok=True)",
                 f"os.chdir(SESSION_DIR)",
                 f"print(f'Working in directory: {{os.getcwd()}}')",
                 "",
-                "FIRST: Check if cleaned_data.csv exists: print(f'cleaned_data.csv exists: {os.path.exists(\"cleaned_data.csv\")}')",
-                "If file doesn't exist, report error and ask preprocessor agent to clean data first",
+                "LOAD DATA AND DETECT COLUMN TYPES:",
+                f"df = pd.read_csv('cleaned_data.csv')",
+                "print(f'Data shape: {df.shape}')",
+                "print(f'Columns: {list(df.columns)}')",
                 "",
-                "CRITICAL: You must ACTUALLY CREATE AND SAVE .py files, not just generate code content!",
+                "# Simple column type detection - no complex JSON loading needed",
+                "numeric_cols = list(df.select_dtypes(include=['number']).columns)",
+                "text_cols = list(df.select_dtypes(include=['object']).columns)",
+                "datetime_cols = list(df.select_dtypes(include=['datetime']).columns)",
+                "print(f'Numeric columns: {numeric_cols}')",
+                "print(f'Text columns: {text_cols}')",
+                "print(f'DateTime columns: {datetime_cols}')",
                 "",
-                "PROCESS:",
-                "1. Load the cleaned data to understand its structure: df = pd.read_csv('cleaned_data.csv')",
-                "2. Print data info: print(f'Data shape: {df.shape}, Columns: {list(df.columns)}')",
-                "3. For each visualization type, CREATE the code AND SAVE it to a .py file",
+                "CREATE VISUALIZATION FUNCTIONS:",
+                "def save_viz_code(filename, viz_code):",
+                f"    full_path = os.path.join(r'{abs_session_dir}', f'{{filename}}.py')",
+                "    with open(full_path, 'w') as f:",
+                "        f.write(viz_code)",
+                "    print(f'Created: {full_path}')",
+                "    return os.path.exists(full_path)",
                 "",
-                "EXAMPLE - Create histogram analysis:",
-                "histogram_code = '''",
-                "import pandas as pd",
-                "import matplotlib.pyplot as plt",
-                "import seaborn as sns",
+                "GENERATE VISUALIZATION SCRIPTS",
                 "",
-                "# Load data",
-                "df = pd.read_csv('cleaned_data.csv')",
-                "",
-                "# Create histogram",
-                "plt.figure(figsize=(10, 6))",
-                "df.hist(bins=20, figsize=(15, 10))",
-                "plt.suptitle('Data Distribution Analysis')",
-                "plt.tight_layout()",
-                "plt.savefig('histogram_analysis.png', dpi=300, bbox_inches='tight')",
-                "plt.close()",
-                "print('Histogram saved as histogram_analysis.png')",
-                "'''",
-                "",
-                "# SAVE the code to file",
-                "with open('histogram_analysis.py', 'w') as f:",
-                "    f.write(histogram_code)",
-                "print('Created: histogram_analysis.py')",
-                "",
-                "MANDATORY: Create at least 3-5 different visualization files:",
-                "- histogram_analysis.py (distribution analysis)",
-                "- correlation_heatmap.py (correlation matrix)",
-                "- scatter_plots.py (relationships between variables)",
-                "- box_plots.py (outlier detection)",
-                "- summary_stats.py (statistical summaries)",
-                "",
-                "For each visualization:",
-                "1. Create the code as a string variable",
-                "2. Use with open('filename.py', 'w') as f: f.write(code_string)",
-                "3. Print confirmation: print(f'Created: filename.py')",
-                "",
-                "VERIFY: List all created Python files:",
-                "py_files = [f for f in os.listdir('.') if f.endswith('.py')]",
-                "print(f'Created Python files: {py_files}')",
-                "print(f'Total Python files: {len(py_files)}')",
-                "",
-                "Each generated .py file must:",
-                "- Import necessary libraries (pandas, matplotlib, seaborn)",
-                "- Load data with: df = pd.read_csv('cleaned_data.csv')",
-                "- Create meaningful visualizations",
-                "- Save plots as high-quality images (.png)",
-                "- Include descriptive titles and labels",
-                "- Use plt.close() to free memory",
-                "",
-                "Handle errors gracefully and report if code generation fails"
+                "# VERIFY CREATED FILES",
+                f"py_files = [f for f in os.listdir(r'{abs_session_dir}') if f.endswith('.py')]",
+                "print(f'Created {len(py_files)} visualization scripts: {py_files}')",
+                "for py_file in py_files:",
+                f"    file_path = os.path.join(r'{abs_session_dir}', py_file)",
+                "    if os.path.exists(file_path):",
+                "        size = os.path.getsize(file_path)",
+                "        print(f'✅ {py_file}: {size} bytes')",
+                "    else:",
+                "        print(f'❌ {py_file}: not found')"
             ],
-            tools=[PythonTools(), PandasTools()],
+            tools=[ImprovedPythonTools(session_dir=abs_session_dir), PandasTools()],
             markdown=True,
             show_tool_calls=True
         )
@@ -237,7 +236,6 @@ class VisualizationAssistant(BasePersona):
                 f"print(f'Working in directory: {{os.getcwd()}}')",
                 "",
                 "Find Python plot files: python_files = [f for f in os.listdir('.') if f.endswith('.py')]",
-                "Print found files: print(f'Found Python files: {python_files}')",
                 "Execute each Python file in current directory:",
                 "for py_file in python_files:",
                 "    try:",
@@ -245,18 +243,20 @@ class VisualizationAssistant(BasePersona):
                 "        result = subprocess.run([sys.executable, py_file], capture_output=True, text=True)",
                 "        if result.returncode == 0:",
                 "            print(f'✅ {py_file} executed successfully')",
+                "            if result.stdout:",
+                "                print(f'Output: {result.stdout.strip()}')",
                 "        else:",
                 "            print(f'❌ {py_file} failed: {result.stderr}')",
                 "    except Exception as e:",
                 "        print(f'❌ Error executing {py_file}: {e}')",
                 "",
-                "List all created files: print(f'All files in directory: {os.listdir(\".\")}') ",
-                "Find image files: image_files = [f for f in os.listdir('.') if f.endswith(('.png', '.jpg', '.svg', '.pdf'))]",
-                "Print created images: print(f'Created visualizations: {image_files}')",
+                "print(f'\\n🎯 VISUALIZATION SUMMARY:')",
+                "print(f'Created {len(image_files)} high-quality visualizations')",
+                "print(f'Total file sizes: {sum(os.path.getsize(f) for f in image_files):,} bytes')",
                 "Generate a summary of all created visualizations with their file paths",
                 "Handle errors gracefully and provide debugging information"
             ],
-            tools=[PythonTools()],
+            tools=[ImprovedPythonTools(session_dir=abs_session_dir)],
             markdown=True,
             show_tool_calls=True
         )
@@ -272,6 +272,13 @@ class VisualizationAssistant(BasePersona):
                 f"SINGLE DIRECTORY: All files must be saved to '{abs_session_dir}' directory",
                 "File flow: extracted_data.csv → cleaned_data.csv → plot_codes.py → plot_images.png",
                 "EDA agent MUST create extracted_data.csv in session directory before other agents proceed",
+                "",
+                "SIMPLIFIED FEATURES:",
+                "1. Column name standardization - lowercase with underscores",
+                "2. Automatic visualization selection based on data types",
+                "3. Professional styling and high-quality plot generation",
+                "4. No complex JSON serialization - simple text-based column info",
+                "",
                 "Follow this strict sequence: EDA → Preprocessing → Code Generation → Visualization",
                 "Each agent must verify the previous agent's output file exists in session directory before proceeding",
                 "If any file is missing from session directory, stop and request the previous agent to complete their task",
@@ -315,12 +322,29 @@ class VisualizationAssistant(BasePersona):
         system_prompt = f"""
             You are coordinating a data analysis team in JupyterLab. Your goal is to:
             1. Extract and analyze data from user input (handle mixed code with imports, prints, and data)
-            2. Clean and preprocess the data
-            3. Generate insightful visualization code
-            4. Create and save plot images
+            2. Clean and preprocess the data with proper column name standardization
+            3. Generate intelligent, high-quality visualization code based on data characteristics
+            4. Create and save professional plot images with enhanced styling
             5. Provide valuable insights and findings to the user
             
-            CRITICAL: The EDA agent must successfully extract ONLY the data from mixed code input and save it as 'session_visualizer/extracted_data.csv' 
+            SIMPLIFIED FEATURES IMPLEMENTED:
+            
+            🔧 COLUMN NAME STANDARDIZATION:
+            - Standardize all column names to lowercase with underscores
+            - Simple text-based column info (no JSON serialization issues)
+            - Prevent 'Department' vs 'department' type errors
+            
+            🎨 AUTOMATIC VISUALIZATION STRATEGY:
+            - Auto-detect column types (numeric vs text vs datetime)
+            - Generate appropriate visualizations based on data types
+            - Professional styling with seaborn themes
+            - Four standard analysis types:
+              * Distribution Analysis (histograms for numeric data)
+              * Relationship Analysis (correlation heatmaps)
+              * Categorical Analysis (bar charts for text data)
+              * Summary Dashboard (comprehensive overview)
+            
+            CRITICAL: The EDA agent must successfully extract ONLY the data from mixed code input and save it as '{SESSION_DIR}/extracted_data.csv' 
             before any other agents can proceed. The agent should ignore imports, print statements, and focus on data extraction.
             
             Expected input scenarios:
@@ -358,3 +382,4 @@ class VisualizationAssistant(BasePersona):
             yield response_content
         
         await self.stream_message(response_iterator())
+        
