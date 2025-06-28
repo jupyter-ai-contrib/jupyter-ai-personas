@@ -44,7 +44,20 @@ software_team = [
     "langchain-core",
     "pygithub"]
 
-all = ["jupyter-ai-personas[finance,emoji,software_team]"]
+data_analytics = [
+    "agno",
+    "boto3",
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "jupyter",
+    "ipython",
+    "jupyterlab>=4.0.0",
+    "langchain-core",
+    "jupyter_ai>=3.0.0a1"
+]
+
+all = ["jupyter-ai-personas[finance,emoji,software_team,data_analytics]"]
 
 [build-system]
 requires = ["hatchling"]
@@ -54,3 +67,4 @@ build-backend = "hatchling.build"
 finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
 emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
 software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
+data_analytics_persona = "jupyter_ai_personas.data_analytics_persona.persona:DataAnalyticsTeam"
