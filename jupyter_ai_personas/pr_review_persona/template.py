@@ -3,6 +3,7 @@ from langchain.prompts import (
 )
 from pydantic import BaseModel
 
+
 class PRPersonaVariables(BaseModel):
     input: str
     model_id: str
@@ -10,8 +11,12 @@ class PRPersonaVariables(BaseModel):
     persona_name: str
     context: str
 
-PR_PROMPT_TEMPLATE = ChatPromptTemplate.from_messages([
-    ("system", """You are a PR reviewer assistant coordinating a team of specialized agents to perform comprehensive pull request reviews. Your role is to oversee the review process and synthesize feedback from different perspectives.
+
+PR_PROMPT_TEMPLATE = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """You are a PR reviewer assistant coordinating a team of specialized agents to perform comprehensive pull request reviews. Your role is to oversee the review process and synthesize feedback from different perspectives.
 
 Review Guidelines:
 
@@ -44,6 +49,8 @@ Repository Management:
 - Consider merge strategy
 
 Current context:
-{context}"""),
-    ("human", "{input}")
-])
+{context}""",
+        ),
+        ("human", "{input}"),
+    ]
+)

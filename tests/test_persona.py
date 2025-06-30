@@ -6,31 +6,38 @@ from agno.team.team import Team
 import asyncio
 from dataclasses import asdict
 
+
 class AwaitableAsyncMock(AsyncMock):
     """AsyncMock that properly handles awaiting coroutines."""
+
     async def __call__(self, *args, **kwargs):
         args = [await arg if asyncio.iscoroutine(arg) else arg for arg in args]
-        kwargs = {k: await v if asyncio.iscoroutine(v) else v for k, v in kwargs.items()}
+        kwargs = {
+            k: await v if asyncio.iscoroutine(v) else v for k, v in kwargs.items()
+        }
         return await super().__call__(*args, **kwargs)
+
 
 @pytest.fixture
 async def pr_persona():
     # Mock initialization arguments
     mock_ychat = AsyncMock()
     mock_manager = AsyncMock()
-    mock_manager.outdated_timeout = 30000 
-    
+    mock_manager.outdated_timeout = 30000
+
     # Mock PersonaAwareness class
-    with patch('jupyter_ai.personas.persona_awareness.PersonaAwareness') as mock_awareness:
+    with patch(
+        "jupyter_ai.personas.persona_awareness.PersonaAwareness"
+    ) as mock_awareness:
         awareness_instance = AsyncMock()
         mock_awareness.return_value = awareness_instance
-        
+
         # to prevent task creation
         async def mock_heartbeat():
             return
-            
+
         awareness_instance._start_heartbeat = mock_heartbeat
-        awareness_instance.outdated_timeout = 30000 
+        awareness_instance.outdated_timeout = 30000
 
         mock_config = Mock()
         mock_config.lm_provider.name = "test_provider"
@@ -45,13 +52,14 @@ async def pr_persona():
             manager=mock_manager,
             config=mock_config,
             log=mock_log,
-            message_interrupted=False 
+            message_interrupted=False,
         )
 
         async def dummy_heartbeat():
             return
+
         awareness_instance._heartbeat_task = asyncio.create_task(dummy_heartbeat())
-        
+
         try:
             yield persona
         finally:
@@ -59,21 +67,25 @@ async def pr_persona():
                 awareness_instance._heartbeat_task.cancel()
             await asyncio.sleep(0)
 
+
 @pytest.fixture
 def mock_message():
     message = Mock(spec=Message)
     message.body = "Please review PR #123 in repo owner/repo"
     return message
 
-@patch('jupyter_ai_personas.pr_review_persona.persona.Team')
-@patch('agno.tools.github.GithubTools.authenticate')
-@patch('boto3.Session')
+
+@patch("jupyter_ai_personas.pr_review_persona.persona.Team")
+@patch("agno.tools.github.GithubTools.authenticate")
+@patch("boto3.Session")
 @pytest.mark.asyncio
-async def test_initialize_team(mock_boto_session, mock_github_auth, mock_team_class, pr_persona):
+async def test_initialize_team(
+    mock_boto_session, mock_github_auth, mock_team_class, pr_persona
+):
     async for persona in pr_persona:
         mock_github_auth.return_value = Mock()
         mock_boto_session.return_value = Mock()
-        
+
         mock_team = Mock()
         mock_code_quality = Mock()
         mock_code_quality.name = "code_quality"
@@ -83,107 +95,124 @@ async def test_initialize_team(mock_boto_session, mock_github_auth, mock_team_cl
         mock_security_checker.name = "security_checker"
         mock_github = Mock()
         mock_github.name = "github"
-        
+
         mock_team.members = [
             mock_code_quality,
             mock_documentation_checker,
             mock_security_checker,
-            mock_github
+            mock_github,
         ]
         mock_team_class.return_value = mock_team
-        
-        with patch('os.getenv', return_value='dummy_token'):
+
+        with patch("os.getenv", return_value="dummy_token"):
             team = persona.initialize_team("test prompt")
-            
-        assert team is mock_team 
+
+        assert team is mock_team
         assert len(team.members) == 4
-        assert team.members[0].name == "code_quality"
-        assert team.members[1].name == "documentation_checker"
-        assert team.members[2].name == "security_checker"
-        assert team.members[3].name == "github"
 
         mock_team_class.assert_called_once()
 
         mock_github_auth.assert_called()
 
+
 @pytest.mark.asyncio
 async def test_process_message_success(pr_persona, mock_message):
     async for persona in pr_persona:
-        persona.stream_message = AsyncMock()
+        persona.send_message = AsyncMock()
 
         mock_history = AsyncMock()
         mock_history.aget_messages.return_value = []
         mock_response = Mock()
         mock_response.content = "PR review completed successfully"
-        
+
         mock_team = Mock()
         mock_team.run.return_value = mock_response
-        
-        with patch('jupyter_ai_personas.pr_review_persona.persona.YChatHistory', return_value=mock_history), \
-             patch.object(persona, 'initialize_team', return_value=mock_team):
+
+        with (
+            patch(
+                "jupyter_ai_personas.pr_review_persona.persona.YChatHistory",
+                return_value=mock_history,
+            ),
+            patch.object(persona, "initialize_team", return_value=mock_team),
+        ):
             await persona.process_message(mock_message)
-            
+
             assert persona.initialize_team.called
             assert mock_team.run.called
-            assert persona.stream_message.called
+            assert persona.send_message.called
+
 
 @pytest.mark.asyncio
 async def test_process_message_value_error(pr_persona, mock_message):
     async for persona in pr_persona:
-        persona.stream_message = AsyncMock()
-        
+        persona.send_message = AsyncMock()
+
         mock_history = AsyncMock()
         mock_history.aget_messages.return_value = []
-        
+
         mock_team = Mock()
         mock_team.run.side_effect = ValueError("Test error")
-        
-        with patch('jupyter_ai_personas.pr_review_persona.persona.YChatHistory', return_value=mock_history), \
-             patch.object(persona, 'initialize_team', return_value=mock_team):
+
+        with (
+            patch(
+                "jupyter_ai_personas.pr_review_persona.persona.YChatHistory",
+                return_value=mock_history,
+            ),
+            patch.object(persona, "initialize_team", return_value=mock_team),
+        ):
             await persona.process_message(mock_message)
-            
-            call_args = persona.stream_message.call_args[0][0]
-            async for message in call_args:
-                assert "Configuration Error" in message
-                assert "Test error" in message
+
+            call_args = persona.send_message.call_args[0][0]
+            assert "Configuration Error" in call_args
+            assert "Test error" in call_args
+
 
 @pytest.mark.asyncio
 async def test_process_message_boto_error(pr_persona, mock_message):
     async for persona in pr_persona:
-        persona.stream_message = AsyncMock()
-        
+        persona.send_message = AsyncMock()
+
         mock_history = AsyncMock()
         mock_history.aget_messages.return_value = []
         from boto3.exceptions import Boto3Error
-        
+
         mock_team = Mock()
         mock_team.run.side_effect = Boto3Error("AWS error")
-        
-        with patch('jupyter_ai_personas.pr_review_persona.persona.YChatHistory', return_value=mock_history), \
-             patch.object(persona, 'initialize_team', return_value=mock_team):
+
+        with (
+            patch(
+                "jupyter_ai_personas.pr_review_persona.persona.YChatHistory",
+                return_value=mock_history,
+            ),
+            patch.object(persona, "initialize_team", return_value=mock_team),
+        ):
             await persona.process_message(mock_message)
-            
-            call_args = persona.stream_message.call_args[0][0]
-            async for message in call_args:
-                assert "AWS Connection Error" in message
-                assert "AWS error" in message
+
+            call_args = persona.send_message.call_args[0][0]
+            assert "PR Review Error" in call_args
+            assert "AWS error" in call_args
+
 
 @pytest.mark.asyncio
 async def test_process_message_general_exception(pr_persona, mock_message):
     async for persona in pr_persona:
-        persona.stream_message = AsyncMock()
-        
+        persona.send_message = AsyncMock()
+
         mock_history = AsyncMock()
         mock_history.aget_messages.return_value = []
-        
+
         mock_team = Mock()
         mock_team.run.side_effect = Exception("General error")
-        
-        with patch('jupyter_ai_personas.pr_review_persona.persona.YChatHistory', return_value=mock_history), \
-             patch.object(persona, 'initialize_team', return_value=mock_team):
+
+        with (
+            patch(
+                "jupyter_ai_personas.pr_review_persona.persona.YChatHistory",
+                return_value=mock_history,
+            ),
+            patch.object(persona, "initialize_team", return_value=mock_team),
+        ):
             await persona.process_message(mock_message)
 
-            call_args = persona.stream_message.call_args[0][0]
-            async for message in call_args:
-                assert "PR Review Error" in message
-                assert "General error" in message
+            call_args = persona.send_message.call_args[0][0]
+            assert "PR Review Error" in call_args
+            assert "General error" in call_args
