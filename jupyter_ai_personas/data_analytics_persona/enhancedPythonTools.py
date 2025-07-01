@@ -1,6 +1,5 @@
 import functools
 import io
-import sys
 import traceback
 from pathlib import Path
 from typing import Any, List, Optional, Dict
@@ -46,21 +45,21 @@ class ImprovedPythonTools(Toolkit):
             # Only use current directory as absolute last resort
             self.session_dir: Path = Path.cwd()
             logger.warning(f"No session_dir provided to ImprovedPythonTools, using: {self.session_dir}")
-        
+
         # Ensure the directory exists
         self.session_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"ImprovedPythonTools using session directory: {self.session_dir}")
-        
+
         # Execution environment
         self.safe_globals: dict = safe_globals or {
             '__builtins__': __builtins__,
             'print': print,
         }
         self.safe_locals: dict = safe_locals or {}
-        
+
         # Persistent variables across executions
         self.execution_context: Dict[str, Any] = {}
-        
+
         tools: List[Any] = []
         if run_code:
             tools.append(self.run_python_code)
@@ -87,16 +86,16 @@ class ImprovedPythonTools(Toolkit):
         """
         try:
             warn()
-            
+
             if description:
                 log_info(f"Executing: {description}")
-            
+
             log_debug(f"Running code:\n{code}\n")
-            
+
             # Capture stdout and stderr
             stdout_buffer = io.StringIO()
             stderr_buffer = io.StringIO()
-            
+
             # CRITICAL FIX: Inject session directory into execution context
             execution_globals = {
                 **self.safe_globals, 
@@ -106,39 +105,39 @@ class ImprovedPythonTools(Toolkit):
                 'session_dir': str(self.session_dir),
             }
             execution_locals = {**self.safe_locals}
-            
+
             # CRITICAL FIX: Change working directory before execution
             import os
             original_cwd = os.getcwd()
             try:
                 os.chdir(self.session_dir)
                 log_info(f"Changed working directory to: {self.session_dir}")
-                
+
                 with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
                     exec(code, execution_globals, execution_locals)
-                    
+
             finally:
                 # Always restore original working directory
                 os.chdir(original_cwd)
-            
+
             # Update execution context with new variables
             self.execution_context.update(execution_locals)
-            
+
             # Get captured output
             stdout_output = stdout_buffer.getvalue()
             stderr_output = stderr_buffer.getvalue()
-            
+
             result_parts = []
             if stdout_output.strip():
                 result_parts.append(f"Output:\n{stdout_output.strip()}")
             if stderr_output.strip():
                 result_parts.append(f"Warnings:\n{stderr_output.strip()}")
-            
+
             if not result_parts:
                 result_parts.append("Code executed successfully (no output)")
-                
+
             return "\n\n".join(result_parts)
-            
+
         except Exception as e:
             error_msg = f"Error executing code: {str(e)}\n"
             error_msg += f"Traceback:\n{traceback.format_exc()}"
@@ -161,13 +160,13 @@ class ImprovedPythonTools(Toolkit):
             # CRITICAL FIX: Always use session directory for file operations
             full_path = self.session_dir / file_path
             full_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             log_info(f"Saving file to session directory: {full_path}")
-            
+
             # Auto-detect file type from extension if not specified
             if file_type == "auto":
                 file_type = full_path.suffix.lower().lstrip('.')
-            
+
             if file_type in ['csv']:
                 # Handle pandas DataFrame
                 if hasattr(content, 'to_csv'):
@@ -175,7 +174,7 @@ class ImprovedPythonTools(Toolkit):
                 else:
                     # Handle string CSV content
                     full_path.write_text(str(content), encoding='utf-8')
-                    
+
             elif file_type in ['png', 'jpg', 'jpeg', 'svg', 'pdf']:
                 # Handle matplotlib figure
                 if hasattr(content, 'savefig'):
@@ -184,11 +183,11 @@ class ImprovedPythonTools(Toolkit):
                     # Handle raw image data
                     with open(full_path, 'wb') as f:
                         f.write(content)
-                        
+
             elif file_type in ['txt', 'md', 'json']:
                 # Handle text content
                 full_path.write_text(str(content), encoding='utf-8')
-                
+
             else:
                 # Generic binary write
                 if isinstance(content, (str, bytes)):
@@ -197,10 +196,10 @@ class ImprovedPythonTools(Toolkit):
                         f.write(content)
                 else:
                     return f"Unsupported content type for file: {file_path}"
-            
+
             log_info(f"Successfully saved essential file: {full_path}")
             return f"Successfully saved: {file_path} in {self.session_dir}"
-            
+
         except Exception as e:
             error_msg = f"Error saving file {file_path}: {str(e)}"
             logger.error(error_msg)
@@ -235,15 +234,15 @@ class ImprovedPythonTools(Toolkit):
         try:
             if not self.execution_context:
                 return "No variables in execution context"
-                
+
             var_list = []
             for name, value in self.execution_context.items():
                 if not name.startswith('_'):  # Skip private variables
                     var_type = type(value).__name__
                     var_list.append(f"{name}: {var_type}")
-                    
+
             return "Available variables:\n" + "\n".join(var_list)
-            
+
         except Exception as e:
             return f"Error listing variables: {str(e)}"
 
@@ -260,13 +259,13 @@ class ImprovedPythonTools(Toolkit):
         try:
             log_info(f"Reading file: {file_name} from {self.session_dir}")
             file_path = self.session_dir / file_name
-            
+
             if not file_path.exists():
                 return f"File not found: {file_name} in {self.session_dir}"
-                
+
             contents = file_path.read_text(encoding="utf-8")
             return contents
-            
+
         except Exception as e:
             error_msg = f"Error reading file {file_name}: {str(e)}"
             logger.error(error_msg)
@@ -286,12 +285,12 @@ class ImprovedPythonTools(Toolkit):
             log_info(f"Listing files in: {self.session_dir}")
             files = list(self.session_dir.glob(file_pattern))
             file_names = [f.name for f in files if f.is_file()]
-            
+
             if not file_names:
                 return f"No files found matching pattern: {file_pattern} in {self.session_dir}"
-                
+
             return f"Files in session directory ({self.session_dir}): {', '.join(sorted(file_names))}"
-            
+
         except Exception as e:
             error_msg = f"Error listing files: {str(e)}"
             logger.error(error_msg)
@@ -321,7 +320,7 @@ class ImprovedPythonTools(Toolkit):
         try:
             # CRITICAL FIX: Ensure plot is saved in session directory
             plot_path = self.session_dir / plot_filename
-            
+
             # Add plot saving to the code
             enhanced_code = f"""
                 import matplotlib.pyplot as plt
@@ -334,13 +333,13 @@ class ImprovedPythonTools(Toolkit):
                 plt.close()  # Clean up memory
                 print(f'Plot saved to: {plot_path}')
                 """
-            
+
             result = self.run_python_code(enhanced_code, f"Creating visualization: {plot_filename}")
-            
+
             if "Error" not in result:
                 return f"Visualization saved: {plot_filename} in {self.session_dir}\n{result}"
             else:
                 return result
-                
+
         except Exception as e:
             return f"Error creating visualization: {str(e)}"

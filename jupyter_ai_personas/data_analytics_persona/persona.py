@@ -1,5 +1,5 @@
-import os
 import re
+import os
 import logging
 import boto3
 import datetime
@@ -12,7 +12,6 @@ from langchain_core.messages import HumanMessage
 from agno.agent import Agent
 from agno.models.aws import AwsBedrock
 from agno.team.team import Team
-from agno.tools.python import PythonTools
 from agno.tools.pandas import PandasTools
 from .enhancedPythonTools import ImprovedPythonTools
 
@@ -47,22 +46,22 @@ class DataAnalyticsTeam(BasePersona):
             description="A specialized data analysis team that performs EDA, preprocessing, visualization generation, and plot creation.",
             system_prompt="I am a data analysis team designed to help with comprehensive data analysis workflows. I coordinate specialized team members: an EDA agent who extracts and analyzes data, a preprocessor who cleans and organizes data, a code generator who creates visualization code, and a visualizer who executes and saves plots. Together, we provide complete data analysis pipelines with insights and visualizations.",
         )
-    
-    def initialize_team(self, system_prompt):
+
+    def initialize_team(self, system_prompt, user_message):
         # Validate required configuration
         if not hasattr(self.config, 'lm_provider_params') or 'model_id' not in self.config.lm_provider_params:
             raise ValueError("Model ID not found in configuration")
-        
+
         model_id = self.config.lm_provider_params["model_id"]
-        
+
         if not session:
             raise ValueError("AWS session not properly configured")
-        
+
         # Create single directory for all files with absolute path
         abs_session_dir = os.path.abspath(SESSION_DIR)
         os.makedirs(abs_session_dir, exist_ok=True)
         logger.info(f"Working directory: {abs_session_dir}")
-        
+
         eda_agent = Agent(
             name="eda_agent",
             role="Exploratory Data Analysis specialist who extracts and analyzes data",
@@ -78,37 +77,39 @@ class DataAnalyticsTeam(BasePersona):
                 f"os.makedirs(SESSION_DIR, exist_ok=True)",
                 f"os.chdir(SESSION_DIR)",
                 "",
-                "NEVER GENERATE DATA OTHER THAN THE DATA PROVIDED BY THE USER"
-                "MANDATORY DATA EXTRACTION:",
-                "1. Print the ENTIRE user message first: print('USER MESSAGE:', message_text)",
-                "2. Look ONLY for actual data in the message - no creation of new data",
-                "3. Extract data patterns EXACTLY as provided:",
+                f"USER_MESSAGE = '''{user_message}'''",
+                "",
+                "MANDATORY DATA EXTRACTION FROM USER_MESSAGE:",
+                "1. Print the user message first: print('USER MESSAGE TO ANALYZE:', USER_MESSAGE)",
+                "2. Look ONLY for actual data in USER_MESSAGE - no creation of new data",
+                "3. Extract data patterns EXACTLY as provided in USER_MESSAGE:",
                 "   - DataFrame creation: df = pd.DataFrame(...) [extract exact values]",
                 "   - Dictionary data: data = {...} [extract exact structure]", 
                 "   - CSV text: comma-separated values [extract exact text]",
                 "   - List/array data: [1,2,3] [extract exact values]",
-                "4. Execute ONLY the extracted user data code",
+                "4. Execute ONLY the extracted user data code from USER_MESSAGE",
                 "5. NEVER add, modify, or supplement the user's data",
                 "",
-                "  EXTRACTION EXAMPLES (use exact user values):",
-                "- From: 'df = pd.DataFrame({\"x\": [1,2,3], \"y\": [4,5,6]})'",
-                "  Extract: df = pd.DataFrame({\"x\": [1,2,3], \"y\": [4,5,6]}) [EXACT SAME]",
-                "- From raw CSV: 'name,age\\nJohn,25\\nJane,30'",
-                "  Use: pd.read_csv(io.StringIO('name,age\\nJohn,25\\nJane,30')) [EXACT SAME]",
+                "EXTRACTION EXAMPLES (use exact user values from USER_MESSAGE):",
+                "- If USER_MESSAGE contains: 'df = pd.DataFrame({\"x\": [1,2,3], \"y\": [4,5,6]})'",
+                "  Extract and execute: df = pd.DataFrame({\"x\": [1,2,3], \"y\": [4,5,6]}) [EXACT SAME]",
+                "- If USER_MESSAGE contains raw CSV: 'name,age\\nJohn,25\\nJane,30'",
+                "  Use: df = pd.read_csv(io.StringIO('name,age\\nJohn,25\\nJane,30')) [EXACT SAME]",
                 "",
-                "3. FORBIDDEN ACTIONS:",
+                "FORBIDDEN ACTIONS:",
                 "   - NEVER use np.random or random to generate data",
                 "   - NEVER create example values like [1, 2, 3, 4, 5]",
                 "   - NEVER use pd.DataFrame() with values you invented",
-                "   - If you only see column names without values, STOP and report error",
+                "   - NEVER create synthetic AWS employee data or any other fake data",
+                "   - If USER_MESSAGE only has column names without values, STOP and report error",
                 "",
-                "4. EXTRACTION VERIFICATION:",
+                "EXTRACTION VERIFICATION:",
                 "   - After extraction, print: print('Extracted data preview:', df.head())",
                 "   - If df is empty or has no rows, extraction FAILED",
-                "   - The data values in df must EXACTLY match what user provided",
+                "   - The data values in df must EXACTLY match what user provided in USER_MESSAGE",
                 "",
                 "PHASE 2 - EXPLORATORY DATA ANALYSIS:",
-                "Only proceed with EDA if you successfully extracted real data:",
+                "Only proceed with EDA if you successfully extracted real data from USER_MESSAGE:",
                 "",
                 "A. BASIC INFORMATION:",
                 "   - Dataset shape, columns, data types",
@@ -123,14 +124,14 @@ class DataAnalyticsTeam(BasePersona):
                 "   - Descriptive statistics for numeric columns",
                 "   - Frequency analysis for categorical columns",
                 "",
-                "PHASE 3 - SAVE ONLY IF REAL DATA:",
-                "if len(df) > 0 and 'real data was extracted':",
+                "PHASE 3 - SAVE ONLY IF REAL DATA FROM USER_MESSAGE:",
+                "if len(df) > 0 and 'real data was extracted from USER_MESSAGE':",
                 f"    df.to_csv(os.path.join(r'{abs_session_dir}', 'extracted_data.csv'), index=False)",
-                "    print(f'Saved {len(df)} rows of USER-PROVIDED data')",
+                "    print(f'Saved {{len(df)}} rows of USER-PROVIDED data from USER_MESSAGE')",
                 "else:",
-                "    print('ERROR: No real data to save - only column names found')",
+                "    print('ERROR: No real data to save - only column names found in USER_MESSAGE')",
                 "",
-                "Signal 'DATA_EXTRACTED' only if real user data was saved"
+                "Signal 'DATA_EXTRACTED' only if real user data from USER_MESSAGE was saved"
             ],
             tools=[ImprovedPythonTools(session_dir=abs_session_dir), PandasTools()],
             markdown=True,
@@ -155,18 +156,29 @@ class DataAnalyticsTeam(BasePersona):
                 "If file doesn't exist, report error and ask EDA agent to extract data first",
                 "Load the extracted data: df = pd.read_csv('extracted_data.csv')",
                 "",
-                "SIMPLIFIED COLUMN STANDARDIZATION:",
-                "print(f'Original columns: {list(df.columns)}')",
+                "INSPECT ACTUAL COLUMNS:",
+                "print(f'Actual columns in extracted data: {list(df.columns)}')",
+                "print(f'Data types: {df.dtypes}')",
+                "print(f'Data shape: {df.shape}')",
+                "",
+                "COLUMN STANDARDIZATION:",
+                "# Standardize column names to lowercase with underscores",
+                "original_columns = list(df.columns)",
                 "df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_').str.replace('-', '_')",
-                "print(f'Standardized columns: {list(df.columns)}')",
+                "standardized_columns = list(df.columns)",
+                "print(f'Original columns: {original_columns}')",
+                "print(f'Standardized columns: {standardized_columns}')",
                 "",
                 "BASIC DATA CLEANING:",
-                "df = df.dropna().drop_duplicates()",
-                "print(f'Cleaned data shape: {df.shape}')",
+                "print(f'Data before cleaning: {df.shape}')",
+                "print(f'Missing values per column: {df.isnull().sum()}')",
+                "df_cleaned = df.dropna().drop_duplicates()",
+                "print(f'Data after cleaning: {df_cleaned.shape}')",
                 "",
                 "SAVE CLEANED DATA:",
-                "df.to_csv('cleaned_data.csv', index=False)",
+                "df_cleaned.to_csv('cleaned_data.csv', index=False)",
                 "print(f'cleaned_data.csv exists: {os.path.exists(\"cleaned_data.csv\")}')",
+                "print(f'Final cleaned columns: {list(df_cleaned.columns)}')",
                 "",
                 "print(f'Files in directory: {os.listdir(\".\")}') ",
                 "Document all preprocessing steps taken"
@@ -187,29 +199,48 @@ class DataAnalyticsTeam(BasePersona):
                 "SETUP:",
                 "- Import required libraries (matplotlib, pandas, numpy)",
                 "- NEVER use plt.style.use('seaborn') - it will cause an error",
-                "- Load cleaned_data.csv",
-                "- Check available columns and data types",
+                "- Load cleaned_data.csv and inspect its actual columns",
+                "- Check available columns and data types before creating visualizations",
+                "",
+                "CRITICAL - INSPECT DATA FIRST:",
+                "1. Load cleaned_data.csv",
+                "2. Print actual column names: print(f'Available columns: {list(df.columns)}')",
+                "3. Print data types: print(f'Data types: {df.dtypes}')",
+                "4. Print data shape: print(f'Data shape: {df.shape}')",
+                "5. Print sample data: print(df.head())",
                 "",
                 "VISUALIZATION WORKFLOW:",
                 "",
-                "1. CREATE VISUALIZATION CODE FILES:",
+                "1. CREATE VISUALIZATION CODE FILES BASED ON ACTUAL COLUMNS:",
                 "   For each visualization you want to create:",
-                "   a) Write the complete Python code as a string",
-                "   b) Save it to a .py file with descriptive name",
-                "   c) Example pattern:",
+                "   a) Use ONLY the actual column names from cleaned_data.csv",
+                "   b) Write the complete Python code as a string",
+                "   c) Save it to a .py file with descriptive name",
+                "   d) Example pattern:",
                 "      ```",
+                "      # First inspect the data",
+                "      df = pd.read_csv('cleaned_data.csv')",
+                "      actual_columns = list(df.columns)",
+                "      numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()",
+                "      categorical_columns = df.select_dtypes(include=['object']).columns.tolist()",
+                "      ",
+                "      # Then create visualizations using actual column names",
                 "      code = '''",
                 "      import matplotlib.pyplot as plt",
                 "      import pandas as pd",
+                "      import numpy as np",
                 "      ",
                 "      df = pd.read_csv('cleaned_data.csv')",
-                "      plt.figure(figsize=(10, 6))",
-                "      plt.hist(df['column_name'], bins=30)",
-                "      plt.title('Distribution of Column Name')",
-                "      plt.xlabel('Value')",
-                "      plt.ylabel('Frequency')",
-                "      plt.savefig('distribution_plot.png', dpi=300, bbox_inches='tight')",
-                "      plt.close()",
+                "      ",
+                "      # Use actual column names here",
+                "      if 'column_name' in df.columns:",
+                "          plt.figure(figsize=(10, 6))",
+                "          plt.hist(df['column_name'], bins=30)",
+                "          plt.title('Distribution of Column Name')",
+                "          plt.xlabel('Value')",
+                "          plt.ylabel('Frequency')",
+                "          plt.savefig('distribution_plot.png', dpi=300, bbox_inches='tight')",
+                "          plt.close()",
                 "      '''",
                 "      ",
                 "      with open('01_distribution_plot.py', 'w') as f:",
@@ -218,24 +249,25 @@ class DataAnalyticsTeam(BasePersona):
                 "",
                 "2. EXECUTE EACH VISUALIZATION SCRIPT:",
                 "   After saving all .py files:",
-                "   - Use exec() or subprocess to run each script",
+                "   - Use exec() to run each script",
                 "   - This will generate the PNG files",
                 "",
-                "3. REQUIRED VISUALIZATIONS (save as separate .py files):",
-                "   - 01_distribution_plots.py: Histograms for numeric columns",
+                "3. ADAPTIVE VISUALIZATIONS (save as separate .py files):",
+                "   Based on the actual data columns found:",
+                "   - 01_distribution_plots.py: Histograms for numeric columns (if any)",
                 "   - 02_correlation_heatmap.py: Correlation matrix if multiple numeric columns",
-                "   - 03_categorical_analysis.py: Bar charts for categorical columns",
-                "   - 04_scatter_plots.py: Relationships between numeric variables",
+                "   - 03_categorical_analysis.py: Bar charts for categorical columns (if any)",
+                "   - 04_scatter_plots.py: Relationships between numeric variables (if 2+ numeric)",
                 "   - 05_summary_dashboard.py: Combined overview visualization",
                 "",
                 "4. FILE NAMING CONVENTION:",
                 "   - Use numbered prefixes: 01_, 02_, etc.",
-                "   - Descriptive names: distribution_plots, correlation_heatmap",
+                "   - Descriptive names based on actual data",
                 "   - Both .py files and resulting .png files",
                 "",
                 "5. FINAL OUTPUT:",
-                "   - Python code files: 01_distribution_plots.py, 02_correlation_heatmap.py, etc.",
-                "   - Image files: distribution_plot_1.png, correlation_heatmap.png, etc.",
+                "   - Python code files with actual column names",
+                "   - Image files generated from actual data",
                 "   - Summary of all created files",
                 "",
                 "IMPORTANT:",
@@ -243,6 +275,7 @@ class DataAnalyticsTeam(BasePersona):
                 "- Include all necessary imports in each file",
                 "- Use matplotlib only (no seaborn)",
                 "- Save high-quality images (300 dpi)",
+                "- NEVER hardcode column names - always use actual columns from the data",
                 "",
                 "Signal 'VISUALIZATIONS_COMPLETE' with list of created files"
             ],
@@ -257,18 +290,22 @@ class DataAnalyticsTeam(BasePersona):
             members=[eda_agent, preprocessor_agent, visualizer_agent],
             model=AwsBedrock(id=model_id, session=session),
             instructions=[
-                "Chat history: " + system_prompt,
+                f"USER DATA TO ANALYZE: {user_message}",
+                "",
+                "Chat history context: " + system_prompt,
                 "Coordinate a complete data analysis workflow from raw data to final visualizations",
                 f"All files must be saved to '{abs_session_dir}' directory",
                 "",
                 "WORKFLOW:",
-                "1. EDA Agent: Extract data from user input → save as extracted_data.csv",
+                "1. EDA Agent: Extract data from USER DATA above → save as extracted_data.csv",
                 "2. Preprocessor: Clean and standardize data → save as cleaned_data.csv", 
-                "3. Visualizer: Create and save visualization plots → save as PNG files",
+                "3. Visualizer: Create visualization plots → save as PNG files, Do not forget to save the code for the visualizations to file",
                 "",
                 "KEY PRINCIPLES:",
                 "- Each agent depends on the previous agent's output",
                 "- Verify previous outputs exist before proceeding",
+                "- Use ONLY the actual data provided by the user",
+                "- NEVER generate synthetic or example data",
                 "- Provide insights and findings at each stage",
                 "- Handle errors gracefully with clear feedback",
                 "",
@@ -290,7 +327,7 @@ class DataAnalyticsTeam(BasePersona):
         message_text = message.body
         provider_name = self.config.lm_provider.name
         model_id = self.config.lm_provider_params["model_id"]
-            
+
         # Get conversation history with error handling
         try:
             history = YChatHistory(ychat=self.ychat, k=3)
@@ -315,7 +352,13 @@ class DataAnalyticsTeam(BasePersona):
             4. Create and save professional plot images with enhanced styling
             5. Provide valuable insights and findings to the user
             
-            SIMPLIFIED FEATURES IMPLEMENTED:
+            CRITICAL REQUIREMENTS:
+            
+            DATA EXTRACTION:
+            - Extract ONLY the actual data from user message
+            - NEVER generate synthetic data or examples
+            - Use exact values provided by the user
+            - Ignore imports, print statements, focus on data creation code
             
             COLUMN NAME STANDARDIZATION:
             - Standardize all column names to lowercase with underscores
@@ -324,15 +367,16 @@ class DataAnalyticsTeam(BasePersona):
             
             AUTOMATIC VISUALIZATION STRATEGY:
             - Auto-detect column types (numeric vs text vs datetime)
-            - Generate appropriate visualizations based on data types
-            - Professional styling with seaborn themes
-            - Four standard analysis types:
+            - Generate appropriate visualizations based on actual data types
+            - Professional styling without seaborn
+            - Adaptive analysis types based on available data:
               * Distribution Analysis (histograms for numeric data)
               * Relationship Analysis (correlation heatmaps)
               * Categorical Analysis (bar charts for text data)
               * Summary Dashboard (comprehensive overview)
             
-            CRITICAL: The EDA agent must successfully extract ONLY the data from mixed code input and save it as '{SESSION_DIR}/extracted_data.csv' 
+            WORKFLOW REQUIREMENTS:
+            The EDA agent must successfully extract ONLY the data from user message and save it as '{SESSION_DIR}/extracted_data.csv' 
             before any other agents can proceed. The agent should ignore imports, print statements, and focus on data extraction.
             
             Expected input scenarios:
@@ -345,6 +389,7 @@ class DataAnalyticsTeam(BasePersona):
             Data extraction examples:
             - From: "import pandas as pd\\ndf = pd.DataFrame({{'x': [1,2,3]}})\\nprint('hello')" 
             - Extract: "df = pd.DataFrame({{'x': [1,2,3]}})"
+            - Use all the given data values from the user's original input
             
             Context: {history_text}
             Model: {model_id} from {provider_name}
@@ -354,20 +399,20 @@ class DataAnalyticsTeam(BasePersona):
             """
 
         # Initialize and run the team with error handling
-        data_team = self.initialize_team(system_prompt)
-                
+        data_team = self.initialize_team(system_prompt, message_text)
+
+        # Pass the user message explicitly to ensure data extraction
         response = data_team.run(
-            message_text,
+            f"Extract and analyze the data from this user input: {message_text}",
             stream=False,
             stream_intermediate_steps=False,
             show_full_reasoning=True,
         )
-                
+
         # Extract key insights for user-friendly response
         response_content = response.content
-                
+
         async def response_iterator():
             yield response_content
-        
+
         await self.stream_message(response_iterator())
-        

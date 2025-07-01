@@ -1,4 +1,4 @@
-# VisualizationAssistant - Data Analysis Persona for JupyterAI
+# DataAnalyticsTeam - Data Analysis Persona for JupyterAI
 
 A sophisticated, multi-agent data analysis persona that transforms raw data into comprehensive insights and professional visualizations through an intelligent team-based workflow.
 
@@ -19,7 +19,7 @@ The persona orchestrates four specialized agents working in sequence:
 
 ### Enhanced Toolkit Integration
 
-The persona utilizes a custom ImprovedPythonTools toolkit that provides:
+The persona utilizes a custom enhancedPythonTools toolkit that provides:
 - In-memory code execution with persistent context
 - Session-based file management with centralized storage
 - Automatic working directory management
