@@ -4,7 +4,7 @@ A sophisticated, multi-agent data analysis persona that transforms raw data into
 
 ## Overview
 
-The VisualizationAssistant is a specialized JupyterLab AI persona that coordinates a team of four specialized agents to perform end-to-end data analysis workflows. Unlike traditional single-agent approaches, this persona leverages a coordinated team architecture to handle complex data analysis tasks with professional-grade results.
+The DataAnalyticsTeam is a specialized JupyterLab AI persona that coordinates a team of four specialized agents to perform end-to-end data analysis workflows. Unlike traditional single-agent approaches, this persona leverages a coordinated team architecture to handle complex data analysis tasks with professional-grade results.
 
 ## Architecture
 

@@ -43,8 +43,14 @@ class DataAnalyticsTeam(BasePersona):
         return PersonaDefaults(
             name="DataAnalyticsTeam",
             avatar_path="/api/ai/static/jupyternaut.svg",
-            description="A specialized data analysis team that performs EDA, preprocessing, visualization generation, and plot creation.",
-            system_prompt="I am a data analysis team designed to help with comprehensive data analysis workflows. I coordinate specialized team members: an EDA agent who extracts and analyzes data, a preprocessor who cleans and organizes data, a code generator who creates visualization code, and a visualizer who executes and saves plots. Together, we provide complete data analysis pipelines with insights and visualizations.",
+            description="An intelligent data analysis assistant that can chat, explain concepts, and perform comprehensive data analysis workflows including EDA, preprocessing, and visualization.",
+            system_prompt="I am a data analysis team designed to help with comprehensive " 
+                        "data analysis workflows. I coordinate specialized team members: " 
+                        "an EDA agent who extracts and analyzes data, a preprocessor who " 
+                        "cleans and organizes data, a code generator who creates " 
+                        "visualization code, and a visualizer who executes and saves plots. " 
+                        "Together, we provide complete data analysis pipelines with insights "
+                        "and visualizations.",
         )
 
     def initialize_team(self, system_prompt, user_message):
@@ -125,6 +131,7 @@ class DataAnalyticsTeam(BasePersona):
                 "   - Frequency analysis for categorical columns",
                 "",
                 "PHASE 3 - SAVE ONLY IF REAL DATA FROM USER_MESSAGE:",
+                "MAKE SURE to save the csv as 'extracted_data.csv'",
                 "if len(df) > 0 and 'real data was extracted from USER_MESSAGE':",
                 f"    df.to_csv(os.path.join(r'{abs_session_dir}', 'extracted_data.csv'), index=False)",
                 "    print(f'Saved {{len(df)}} rows of USER-PROVIDED data from USER_MESSAGE')",
@@ -290,16 +297,13 @@ class DataAnalyticsTeam(BasePersona):
             members=[eda_agent, preprocessor_agent, visualizer_agent],
             model=AwsBedrock(id=model_id, session=session),
             instructions=[
-                f"USER DATA TO ANALYZE: {user_message}",
-                "",
-                "Chat history context: " + system_prompt,
+                f"Chat history: " + system_prompt,
                 "Coordinate a complete data analysis workflow from raw data to final visualizations",
-                f"All files must be saved to '{abs_session_dir}' directory",
                 "",
-                "WORKFLOW:",
-                "1. EDA Agent: Extract data from USER DATA above → save as extracted_data.csv",
-                "2. Preprocessor: Clean and standardize data → save as cleaned_data.csv", 
-                "3. Visualizer: Create visualization plots → save as PNG files, Do not forget to save the code for the visualizations to file",
+                "WORKFLOW FOR DATA:",
+                "1. EDA Agent: Extract data → save as extracted_data.csv", 
+                "2. Preprocessor: Clean data → save as cleaned_data.csv",
+                "3. Visualizer: Create plots → save as PNG files",
                 "",
                 "KEY PRINCIPLES:",
                 "- Each agent depends on the previous agent's output",
@@ -316,10 +320,10 @@ class DataAnalyticsTeam(BasePersona):
                 "- Comprehensive insights throughout the process"
             ],
             markdown=True,
-            show_members_responses=True,
+            show_members_responses=False,
             enable_agentic_context=True,
             add_datetime_to_instructions=True,
-            show_tool_calls=True
+            show_tool_calls=False
         )
         return data_analysis_team
 
@@ -351,8 +355,10 @@ class DataAnalyticsTeam(BasePersona):
             3. Generate intelligent, high-quality visualization code based on data characteristics
             4. Create and save professional plot images with enhanced styling
             5. Provide valuable insights and findings to the user
-            
+            "
             CRITICAL REQUIREMENTS:
+
+            ALWAYS directly give your response and NOT your thought process.
             
             DATA EXTRACTION:
             - Extract ONLY the actual data from user message
@@ -375,10 +381,6 @@ class DataAnalyticsTeam(BasePersona):
               * Categorical Analysis (bar charts for text data)
               * Summary Dashboard (comprehensive overview)
             
-            WORKFLOW REQUIREMENTS:
-            The EDA agent must successfully extract ONLY the data from user message and save it as '{SESSION_DIR}/extracted_data.csv' 
-            before any other agents can proceed. The agent should ignore imports, print statements, and focus on data extraction.
-            
             Expected input scenarios:
             - Mixed Python code with imports + data creation (extract only data parts)
             - Raw CSV data (comma-separated text)
@@ -393,7 +395,7 @@ class DataAnalyticsTeam(BasePersona):
             
             Context: {history_text}
             Model: {model_id} from {provider_name}
-            
+            "
             Always provide helpful responses with data insights, findings, and explanations of the analysis process.
             If any step fails, provide clear error messages and guidance to the user.
             """
@@ -403,10 +405,10 @@ class DataAnalyticsTeam(BasePersona):
 
         # Pass the user message explicitly to ensure data extraction
         response = data_team.run(
-            f"Extract and analyze the data from this user input: {message_text}",
+            message_text,
             stream=False,
             stream_intermediate_steps=False,
-            show_full_reasoning=True,
+            show_full_reasoning=False,
         )
 
         # Extract key insights for user-friendly response
