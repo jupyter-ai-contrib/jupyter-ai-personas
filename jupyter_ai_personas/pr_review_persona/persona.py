@@ -12,6 +12,7 @@ from agno.tools.python import PythonTools
 from agno.team.team import Team
 from .fetch_ci_failures import fetch_ci_failures
 from .template import PRPersonaVariables, PR_PROMPT_TEMPLATE
+from .pr_comment_tool import create_inline_pr_comments
 
 session = boto3.Session()
 
@@ -58,6 +59,9 @@ class PRReviewPersona(BasePersona):
                 "   - Complexity and readability",
                 "   - Performance implications",
                 "   - Error handling and edge cases",
+                "4. Identify issues that need inline comments:",
+                "   - Note specific code issues with file path and line number",
+                "   - Prepare comment details for the coordinator to post",
             ],
             tools=[
                 PythonTools(),
@@ -117,15 +121,16 @@ class PRReviewPersona(BasePersona):
                 "Monitor and analyze GitHub repository activities and changes",
                 "Fetch and process pull request data",
                 "Analyze code changes and provide structured feedback",
-                "Create a comment on a specific line of a specific file in a pull request.",
+                "Identify issues that need inline comments:",
+                "   - Note specific code issues with file path and line number",
+                "   - Report findings to the coordinator for comment posting",
                 "Note: Requires a valid GitHub personal access token in GITHUB_ACCESS_TOKEN environment variable",
             ],
             tools=[
                 GithubTools(
-                    create_pull_request_comment=True,
                     get_pull_requests=True,
                     get_pull_request_changes=True,
-                )
+                ),
             ],
             markdown=True,
         )
@@ -150,6 +155,8 @@ class PRReviewPersona(BasePersona):
                 "4. GitHub Specialist:",
                 "   - Manage repository operations",
                 "   - Keep PR metadata minimal",
+                "   - Create inline PR comments for specific issues",
+                "   - Use create_inline_pr_comments tool when issues are found",
                 "5. Synthesize findings:",
                 "   - Combine key insights from all members",
                 "   - Focus on actionable items",
@@ -162,10 +169,10 @@ class PRReviewPersona(BasePersona):
             add_datetime_to_instructions=True,
             tools=[
                 GithubTools(
-                    create_pull_request_comment=True,
                     get_pull_requests=True,
                     get_pull_request_changes=True,
                 ),
+                create_inline_pr_comments,
                 ReasoningTools(add_instructions=True, think=True, analyze=True),
             ],
         )
