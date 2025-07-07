@@ -57,24 +57,4 @@ def fetch_ci_failures(repo_name: str, pr_number: int) -> list:
                     }
                     failures.append(failure_data)
 
-        return failures
-
-        """
-        Retrieve CI failure logs from agent's session state.
-        
-        Args:
-            agent (Agent): The agent instance to access session state
-            job_name (str, optional): Filter logs by job name
-            
-        Returns:
-            list: List of failure logs matching the criteria
-        """
-        # Handle None session_state
-        if agent.session_state is None or "ci_logs" not in agent.session_state:
-            return []
-
-        logs = agent.session_state["ci_logs"]
-        if job_name:
-            logs = [log for log in logs if log["name"] == job_name]
-
-        return logs
+    return failures
