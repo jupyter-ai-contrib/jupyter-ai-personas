@@ -1,0 +1,76 @@
+{
+  "messages": [
+    {
+      "raw_time": false,
+      "id": "cc293607-410b-47cd-85d7-0fbb40ae5514",
+      "sender": "23403d00652e4bbe9d7c630c8de7ef45",
+      "time": 1751906248.996685,
+      "body": "hi",
+      "type": "msg"
+    }
+  ],
+  "users": {
+    "jupyter-ai-personas::jupyter_ai_personas::FinancePersona": {
+      "username": "jupyter-ai-personas::jupyter_ai_personas::FinancePersona",
+      "mention_name": null,
+      "display_name": "FinancePersona",
+      "avatar_url": "/api/ai/static/jupyternaut.svg",
+      "initials": null,
+      "name": "FinancePersona",
+      "color": null,
+      "bot": true
+    },
+    "jupyter-ai-personas::jupyter_ai::JupyternautPersona": {
+      "username": "jupyter-ai-personas::jupyter_ai::JupyternautPersona",
+      "bot": true,
+      "name": "Jupyternaut",
+      "avatar_url": "/api/ai/static/jupyternaut.svg",
+      "display_name": "Jupyternaut",
+      "color": null,
+      "initials": null,
+      "mention_name": null
+    },
+    "jupyter-ai-personas::jupyter_ai_personas::DataAnalyticsTeam": {
+      "initials": null,
+      "mention_name": null,
+      "name": "DataAnalyticsTeam",
+      "bot": true,
+      "username": "jupyter-ai-personas::jupyter_ai_personas::DataAnalyticsTeam",
+      "avatar_url": "/api/ai/static/jupyternaut.svg",
+      "display_name": "DataAnalyticsTeam",
+      "color": null
+    },
+    "jupyter-ai-personas::jupyter_ai_personas::EmojiPersona": {
+      "display_name": "EmojiPersona",
+      "username": "jupyter-ai-personas::jupyter_ai_personas::EmojiPersona",
+      "name": "EmojiPersona",
+      "initials": null,
+      "bot": true,
+      "color": null,
+      "avatar_url": "/api/ai/static/jupyternaut.svg",
+      "mention_name": null
+    },
+    "jupyter-ai-personas::jupyter_ai_personas::SoftwareTeamPersona": {
+      "avatar_url": "/api/ai/static/jupyternaut.svg",
+      "display_name": "SoftwareTeamPersona",
+      "name": "SoftwareTeamPersona",
+      "color": null,
+      "initials": null,
+      "mention_name": null,
+      "username": "jupyter-ai-personas::jupyter_ai_personas::SoftwareTeamPersona",
+      "bot": true
+    },
+    "23403d00652e4bbe9d7c630c8de7ef45": {
+      "color": "var(--jp-collaborator-color1)",
+      "username": "23403d00652e4bbe9d7c630c8de7ef45",
+      "name": "Anonymous Carpo",
+      "initials": "AC",
+      "avatar_url": null,
+      "display_name": "Anonymous Carpo"
+    }
+  },
+  "attachments": {},
+  "metadata": {
+    "id": "e1007fd8-f66f-4bf7-8af0-31c546fcdb68"
+  }
+}
