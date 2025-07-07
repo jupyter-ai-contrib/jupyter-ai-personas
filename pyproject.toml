@@ -52,21 +52,9 @@ data_analytics = [
     "matplotlib",
     "jupyter",
     "ipython",
-    "jupyterlab>=4.0.0",
-    "langchain-core",
-    "jupyter_ai>=3.0.0a1"
 ]
 
-context_curator = [
-    "agno",
-    "boto3",
-    "langchain-core",
-    "jupyter_ai>=3.0.0a1",
-    "requests",
-    "pathlib"
-]
-
-all = ["jupyter-ai-personas[finance,emoji,software_team,data_analytics,context_curator]"]
+all = ["jupyter-ai-personas[finance,emoji,software_team,data_analytics]"]
 
 [build-system]
 requires = ["hatchling"]
@@ -77,4 +65,3 @@ finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
 emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
 software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
 data_analytics_persona = "jupyter_ai_personas.data_analytics_persona.persona:DataAnalyticsTeam"
-context_curator_persona = "jupyter_ai_personas.data_science_persona.context_curator_persona:ContextCuratorPersona"
