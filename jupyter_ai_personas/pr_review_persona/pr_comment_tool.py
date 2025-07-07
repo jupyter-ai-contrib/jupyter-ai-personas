@@ -1,5 +1,5 @@
 from typing import Any, Dict, List
-from github import Github, GithubException
+from github import Github
 from os import getenv
 from agno.tools import tool
 
