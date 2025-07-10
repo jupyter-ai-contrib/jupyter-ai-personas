@@ -2,8 +2,8 @@ import functools
 import io
 import traceback
 from pathlib import Path
-from typing import Any, List, Optional, Dict
-from contextlib import redirect_stdout, redirect_stderr
+from typing import Any, List, Optional, Dict, Union
+from contextlib import redirect_stdout, redirect_stderr, contextmanager
 
 from agno.tools import Toolkit
 from agno.utils.log import log_debug, log_info, logger
@@ -12,6 +12,18 @@ from agno.utils.log import log_debug, log_info, logger
 @functools.lru_cache(maxsize=None)
 def warn() -> None:
     logger.warning("ImprovedPythonTools can run arbitrary code, please provide human supervision.")
+
+
+@contextmanager
+def change_dir(path):
+    """Context manager to temporarily change working directory."""
+    import os
+    original = os.getcwd()
+    try:
+        os.chdir(path)
+        yield
+    finally:
+        os.chdir(original)
 
 
 class ImprovedPythonTools(Toolkit):
@@ -48,7 +60,7 @@ class ImprovedPythonTools(Toolkit):
 
         # Ensure the directory exists
         self.session_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"ImprovedPythonTools using session directory: {self.session_dir}")
+        logger.info(f"ImprovedPythonTools using session directory: {self.session_dir.absolute()}")
 
         # Execution environment
         self.safe_globals: dict = safe_globals or {
@@ -107,18 +119,11 @@ class ImprovedPythonTools(Toolkit):
             execution_locals = {**self.safe_locals}
 
             # CRITICAL FIX: Change working directory before execution
-            import os
-            original_cwd = os.getcwd()
-            try:
-                os.chdir(self.session_dir)
-                log_info(f"Changed working directory to: {self.session_dir}")
-
+            log_info(f"Changed working directory to: {self.session_dir}")
+            
+            with change_dir(self.session_dir):
                 with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
                     exec(code, execution_globals, execution_locals)
-
-            finally:
-                # Always restore original working directory
-                os.chdir(original_cwd)
 
             # Update execution context with new variables
             self.execution_context.update(execution_locals)
@@ -131,7 +136,7 @@ class ImprovedPythonTools(Toolkit):
             if stdout_output.strip():
                 result_parts.append(f"Output:\n{stdout_output.strip()}")
             if stderr_output.strip():
-                result_parts.append(f"Warnings:\n{stderr_output.strip()}")
+                result_parts.append(f"Stderr:\n{stderr_output.strip()}")
 
             if not result_parts:
                 result_parts.append("Code executed successfully (no output)")
@@ -144,12 +149,12 @@ class ImprovedPythonTools(Toolkit):
             logger.error(error_msg)
             return error_msg
 
-    def save_essential_file(self, file_path: str, content: Any, file_type: str = "auto") -> str:
+    def save_essential_file(self, file_path: Union[str, Path], content: Any, file_type: str = "auto") -> str:
         """
         Save only essential files (data, plots, results) to the session directory.
         
         Args:
-            file_path: Relative path within session directory
+            file_path: Relative path within session directory (str or Path)
             content: Content to save (DataFrame, plot figure, string, etc.)
             file_type: Type of file ('csv', 'png', 'txt', 'auto')
             
@@ -184,7 +189,7 @@ class ImprovedPythonTools(Toolkit):
                     with open(full_path, 'wb') as f:
                         f.write(content)
 
-            elif file_type in ['txt', 'md', 'json']:
+            elif file_type in ['txt', 'md', 'json', 'yaml', 'yml']:
                 # Handle text content
                 full_path.write_text(str(content), encoding='utf-8')
 
@@ -205,7 +210,7 @@ class ImprovedPythonTools(Toolkit):
             logger.error(error_msg)
             return error_msg
 
-    def get_variable(self, variable_name: str) -> str:
+    def get_variable_str_representation(self, variable_name: str) -> str:
         """
         Get the value of a variable from the execution context.
         
@@ -238,7 +243,11 @@ class ImprovedPythonTools(Toolkit):
             var_list = []
             for name, value in self.execution_context.items():
                 if not name.startswith('_'):  # Skip private variables
-                    var_type = type(value).__name__
+                    # Get more detailed type information
+                    var_type = str(type(value))
+                    # Clean up the type string for readability
+                    if var_type.startswith("<class '") and var_type.endswith("'>"):
+                        var_type = var_type[8:-2]
                     var_list.append(f"{name}: {var_type}")
 
             return "Available variables:\n" + "\n".join(var_list)
@@ -256,20 +265,19 @@ class ImprovedPythonTools(Toolkit):
         Returns:
             File contents or error message
         """
+        log_info(f"Reading file: {file_name} from {self.session_dir}")
+        file_path = self.session_dir / file_name
+
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_name} in {self.session_dir}")
         try:
-            log_info(f"Reading file: {file_name} from {self.session_dir}")
-            file_path = self.session_dir / file_name
-
-            if not file_path.exists():
-                return f"File not found: {file_name} in {self.session_dir}"
-
             contents = file_path.read_text(encoding="utf-8")
             return contents
-
         except Exception as e:
             error_msg = f"Error reading file {file_name}: {str(e)}"
             logger.error(error_msg)
-            return error_msg
+            logger.error(f"Stack trace:\n{traceback.format_exc()}")
+            raise IOError(error_msg) from e
 
     def list_files(self, file_pattern: str = "*") -> str:
         """
@@ -324,9 +332,6 @@ class ImprovedPythonTools(Toolkit):
             # Add plot saving to the code
             enhanced_code = f"""
                 import matplotlib.pyplot as plt
-                import os
-                # Force working directory
-                os.chdir(r'{self.session_dir}')
                 {code}
                 # Auto-save the plot to session directory
                 plt.savefig(r'{plot_path}', dpi=300, bbox_inches='tight')

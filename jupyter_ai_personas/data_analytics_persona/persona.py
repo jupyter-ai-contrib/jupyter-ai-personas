@@ -53,12 +53,12 @@ class DataAnalyticsTeam(BasePersona):
                         "and visualizations.",
         )
 
-    def initialize_team(self, system_prompt, user_message):
+    def initialize_team(self, system_prompt: str, user_message: str):
         # Validate required configuration
-        if not hasattr(self.config, 'lm_provider_params') or 'model_id' not in self.config.lm_provider_params:
+        if not hasattr(self.config_manager, 'lm_provider_params') or 'model_id' not in self.config_manager.lm_provider_params:
             raise ValueError("Model ID not found in configuration")
 
-        model_id = self.config.lm_provider_params["model_id"]
+        model_id = self.config_manager.lm_provider_params["model_id"]
 
         if not session:
             raise ValueError("AWS session not properly configured")
@@ -333,8 +333,8 @@ class DataAnalyticsTeam(BasePersona):
 
     async def process_message(self, message: Message):
         message_text = message.body
-        provider_name = self.config.lm_provider.name
-        model_id = self.config.lm_provider_params["model_id"]
+        provider_name = self.config_manager.lm_provider.name
+        model_id = self.config_manager.lm_provider_params["model_id"]
 
         # Get conversation history with error handling
         try:

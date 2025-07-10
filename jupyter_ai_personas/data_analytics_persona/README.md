@@ -19,7 +19,7 @@ The persona orchestrates four specialized agents working in sequence:
 
 ### Enhanced Toolkit Integration
 
-The persona utilizes a custom enhancedPythonTools toolkit that provides:
+The persona utilizes a custom **enhancedPythonTools** toolkit that provides:
 - In-memory code execution with persistent context
 - Session-based file management with centralized storage
 - Automatic working directory management
@@ -54,6 +54,40 @@ The persona utilizes a custom enhancedPythonTools toolkit that provides:
 
 ## Usage
 
+### Getting Started
+
+#### Step 1: Load Test Data
+Open the provided test data notebook to see sample data:
+
+![Test Data](images/show_test_data.png)
+
+The notebook contains sample AWS employee data with columns for age, salary, IQ, department, and level - perfect for testing the data analytics persona.
+
+#### Step 2: Open Chat and Select Persona
+1. Open the JupyterLab chat interface
+2. Use the `@` symbol to select the DataAnalyticsTeam persona
+
+![Open Chat](images/open_chat_selected_persona.png)
+
+#### Step 3: Provide Your Data
+Simply paste your data or code containing data into the chat:
+
+![User Prompt](images/user_prompt.png)
+
+#### Step 4: Session Creation
+The persona automatically creates a timestamped session directory for your analysis:
+
+![Session Created](images/created_session.png)
+
+#### Step 5: Analysis Results
+The persona will automatically:
+- Extract and clean your data
+- Generate appropriate visualizations
+- Save all outputs in organized files
+
+![Analysis Part 1](images/analysis_p1.png)
+![Analysis Part 2](images/analysis_p2.png)
+
 ### Basic Usage
 
 ```python
@@ -75,6 +109,7 @@ Bob,28,Sales
 """
 
 # Mixed code with data
+
 import pandas as pd
 import numpy as np
 df = pd.DataFrame({
@@ -101,8 +136,7 @@ Each analysis session creates an organized directory structure:
 session_YYYYMMDD_HHMMSS/
 ├── extracted_data.csv      # Raw extracted data
 ├── cleaned_data.csv        # Preprocessed data
-├── column_info.txt         # Data structure info
-├── distribution_plot.py    # Visualization code files
+├── distribution_plot.py    # Visualization code and png files
 ├── correlation_plot.py     
 ├── category_plot.py
 ├── summary_plot.py
@@ -124,17 +158,6 @@ The persona includes a completely revamped ImprovedPythonTools class that provid
 - Automatic Working Directory Handling: Ensures all file operations occur in the correct location
 - Enhanced Error Handling: Comprehensive error reporting with detailed debugging information
 
-```python
-def run_python_code(code: str, description: str = "") -> str:
-    """Execute Python code in-memory with persistent context"""
-
-def save_essential_file(file_path: str, content: Any, file_type: str = "auto") -> str:
-    """Save important files (data, plots, results) to session directory"""
-
-def execute_visualization_code(code: str, plot_filename: str) -> str:
-    """Execute visualization code and automatically save plots"""
-```
-
 ### AWS Integration
 
 - Bedrock Model Support: Utilizes AWS Bedrock for model access
@@ -149,16 +172,26 @@ def execute_visualization_code(code: str, plot_filename: str) -> str:
 - Required Python packages: boto3, pandas, numpy, matplotlib, seaborn
 
 ### Setup
-1. Place the persona file in your JupyterLab personas directory
-2. Configure AWS credentials for Bedrock access
-3. Select the VisualizationAssistant persona in JupyterLab
-4. Provide your preferred Bedrock model ID in the configuration
-
-### Environment Variables
-```bash
-AWS_PROFILE=your-profile
-AWS_REGION=your-region
+1. Configure AWS credentials for Bedrock access
+```python
+try:
+    session = boto3.Session()
+    session.get_credentials()
+except Exception as e:
+    logger.error(f"AWS credentials not configured: {e}")
+    session = None
 ```
+
+2. Select the DataAnalyticsTeam persona in JupyterLab
+3. **Try the test data**: Open `test_data.ipynb` in the data_analytics_persona folder to see sample data
+4. Start analyzing data by simply providing your data in the chat
+
+**What Happens Automatically:**
+1. **Data Extraction**: Finds and extracts your data from any surrounding code
+2. **Data Cleaning**: Standardizes column names, removes duplicates, handles missing values
+3. **Smart Visualization**: Creates appropriate plots based on your data types
+4. **Professional Output**: Saves high-quality PNG files and organized CSV files
+5. **Insights**: Provides analysis and findings throughout the process
 
 ## Supported Data Types
 
