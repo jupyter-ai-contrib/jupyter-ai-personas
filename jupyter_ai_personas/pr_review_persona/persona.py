@@ -59,9 +59,11 @@ class PRReviewPersona(BasePersona):
                 "   - Complexity and readability",
                 "   - Performance implications",
                 "   - Error handling and edge cases",
-                "4. Identify issues that need inline comments:",
-                "   - Note specific code issues with file path and line number",
-                "   - Prepare comment details for the coordinator to post",
+                "4. MUST create inline comments for issues found:",
+                "   - For each code issue, IMMEDIATELY call create_inline_pr_comments",
+                "   - Use exact file paths from PR changes",
+                "   - Use line numbers from the diff",
+                "   - Do not just mention issues - CREATE the comments",
             ],
             tools=[
                 PythonTools(),
@@ -152,11 +154,10 @@ class PRReviewPersona(BasePersona):
                 "3. Security Analyst:",
                 "   - Check for security vulnerabilities",
                 "   - Prioritize high-impact issues",
-                "4. GitHub Specialist:",
-                "   - Manage repository operations",
-                "   - Keep PR metadata minimal",
-                "   - Create inline PR comments for specific issues",
-                "   - Use create_inline_pr_comments tool when issues are found",
+                "4. CRITICAL - Always create inline comments:",
+                "   - MUST call create_inline_pr_comments for any issues found",
+                "   - Do not just report issues - POST them as comments",
+                "   - Use the exact format: [{\"path\": \"file.py\", \"position\": 10, \"body\": \"issue description\"}]",
                 "5. Synthesize findings:",
                 "   - Combine key insights from all members",
                 "   - Focus on actionable items",
@@ -206,15 +207,53 @@ class PRReviewPersona(BasePersona):
         ].content
 
         try:
+            # Send immediate acknowledgment
+            self.send_message("🔍 Starting PR review... This may take a few minutes for large PRs.")
+            
             team = self.initialize_team(system_prompt)
-            response = team.run(
-                message.body,
-                stream=False,
-                stream_intermediate_steps=False,
+            
+            # Add periodic heartbeat messages during processing
+            import asyncio
+            import threading
+            
+            # Flag to stop heartbeat when done
+            processing = threading.Event()
+            processing.set()
+            
+            async def heartbeat():
+                await asyncio.sleep(120)  # Wait 2 minutes before first message
+                if processing.is_set():
+                    self.send_message("⏳ Still processing large PR...")
+                    await asyncio.sleep(180)  # Wait 3 more minutes
+                    if processing.is_set():
+                        self.send_message("⏳ Almost done...")
+                        await asyncio.sleep(300)  # Wait 5 more minutes
+                        if processing.is_set():
+                            self.send_message("⏳ Taking longer than expected, please wait...")
+            
+            # Start heartbeat task
+            heartbeat_task = asyncio.create_task(heartbeat())
+            
+            try:
+                # Run the team processing in a thread to avoid blocking
+                response = await asyncio.to_thread(
+                    team.run,
+                    message.body,
+                    stream=False,
+                    stream_intermediate_steps=False,
                 show_full_reasoning=False,
-            )
-
-            self.send_message(response.content)
+                )
+                
+                # Stop heartbeat
+                processing.clear()
+                heartbeat_task.cancel()
+                
+                self.send_message(response.content)
+                
+            except Exception as run_error:
+                processing.clear()
+                heartbeat_task.cancel()
+                raise run_error
 
         except ValueError as e:
             error_message = f"Configuration Error: {str(e)}\nThis may be due to missing or invalid environment variables, model configuration, or input parameters."
