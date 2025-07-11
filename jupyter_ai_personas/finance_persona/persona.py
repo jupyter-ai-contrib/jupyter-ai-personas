@@ -71,8 +71,8 @@ class FinancePersona(BasePersona):
 
 
     async def process_message(self, message: Message):
-        provider_name = self.config.lm_provider.name
-        model_id = self.config.lm_provider_params["model_id"]
+        provider_name = self.config_manager.lm_provider.name
+        model_id = self.config_manager.lm_provider_params["model_id"]
 
         runnable = self.build_runnable()
         variables = JupyternautVariables(
@@ -84,7 +84,7 @@ class FinancePersona(BasePersona):
 
         # Check if the prompt is about finance. If so, pass on to agentic workflow, else use default handling
         prompt = variables.input.split(" ", 1)[1]
-        llm = self.config.lm_provider(**self.config.lm_provider_params)
+        llm = self.config_manager.lm_provider(**self.config_manager.lm_provider_params)
         llm = llm.with_structured_output(
             UserQueryClassifier, 
         )
@@ -105,7 +105,7 @@ class FinancePersona(BasePersona):
 
     def build_runnable(self) -> Any:
         # TODO: support model parameters. maybe we just add it to lm_provider_params in both 2.x and 3.x
-        llm = self.config.lm_provider(**self.config.lm_provider_params)
+        llm = self.config_manager.lm_provider(**self.config_manager.lm_provider_params)
         runnable = JUPYTERNAUT_PROMPT_TEMPLATE | llm | StrOutputParser()
         runnable = RunnableWithMessageHistory(
             runnable=runnable,  #  type:ignore[arg-type]

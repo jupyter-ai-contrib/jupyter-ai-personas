@@ -9,7 +9,7 @@ authors = [
 requires-python = ">=3.9"
 
 dependencies = [
-    "jupyter_ai==3.0.0a1"
+    "jupyter_ai>=3.0.0a1"
 ]
 
 [project.optional-dependencies]
@@ -27,6 +27,7 @@ finance = [
     "mcp",
     "agno",
     "duckduckgo-search",
+    "ddgs",
     "matplotlib",
     "statsmodels",
     "yfinance",
@@ -58,7 +59,6 @@ build-backend = "hatchling.build"
 
 [project.entry-points."jupyter_ai.personas"]
 finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
-emoji_persona = "jupyter_ai_personas.emoji_persona.persona.persona:EmojiPersona"
+emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
 software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
-
 pr_review_persona = "jupyter_ai_personas.pr_review_persona.persona:PRReviewPersona"

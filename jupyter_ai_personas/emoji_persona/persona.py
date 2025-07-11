@@ -72,8 +72,8 @@ class EmojiPersona(BasePersona):
         )
 
     async def process_message(self, message: Message):
-        provider_name = self.config.lm_provider.name
-        model_id = self.config.lm_provider_params["model_id"]
+        provider_name = self.config_manager.lm_provider.name
+        model_id = self.config_manager.lm_provider_params["model_id"]
 
         runnable = self.build_runnable()
         variables = JupyternautVariables(
@@ -91,7 +91,7 @@ class EmojiPersona(BasePersona):
         self.send_message(reply)
 
     def build_runnable(self) -> Any:
-        llm = self.config.lm_provider(**self.config.lm_provider_params)
+        llm = self.config_manager.lm_provider(**self.config_manager.lm_provider_params)
         
         runnable = PROMPT_TEMPLATE | llm | StrOutputParser()
         runnable = RunnableWithMessageHistory(
