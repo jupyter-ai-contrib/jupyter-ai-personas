@@ -31,7 +31,7 @@ class PRReviewPersona(BasePersona):
         )
 
     def initialize_team(self, system_prompt):
-        model_id = self.config.lm_provider_params["model_id"]
+        model_id = self.config_manager.lm_provider_params["model_id"]
         github_token = os.getenv("GITHUB_ACCESS_TOKEN")
         if not github_token:
             raise ValueError(
@@ -181,8 +181,8 @@ class PRReviewPersona(BasePersona):
         return pr_review_team
 
     async def process_message(self, message: Message):
-        provider_name = self.config.lm_provider.name
-        model_id = self.config.lm_provider_params["model_id"]
+        provider_name = self.config_manager.lm_provider.name
+        model_id = self.config_manager.lm_provider_params["model_id"]
 
         history = YChatHistory(ychat=self.ychat, k=2)
         messages = await history.aget_messages()
@@ -207,9 +207,6 @@ class PRReviewPersona(BasePersona):
         ].content
 
         try:
-            # Send immediate acknowledgment
-            self.send_message("🔍 Starting PR review... This may take a few minutes for large PRs.")
-            
             team = self.initialize_team(system_prompt)
             
             # Add periodic heartbeat messages during processing
@@ -221,21 +218,19 @@ class PRReviewPersona(BasePersona):
             processing.set()
             
             async def heartbeat():
-                await asyncio.sleep(120)  # Wait 2 minutes before first message
+                await asyncio.sleep(120)
                 if processing.is_set():
                     self.send_message("⏳ Still processing large PR...")
-                    await asyncio.sleep(180)  # Wait 3 more minutes
+                    await asyncio.sleep(180) 
                     if processing.is_set():
                         self.send_message("⏳ Almost done...")
-                        await asyncio.sleep(300)  # Wait 5 more minutes
+                        await asyncio.sleep(300) 
                         if processing.is_set():
                             self.send_message("⏳ Taking longer than expected, please wait...")
             
-            # Start heartbeat task
             heartbeat_task = asyncio.create_task(heartbeat())
             
             try:
-                # Run the team processing in a thread to avoid blocking
                 response = await asyncio.to_thread(
                     team.run,
                     message.body,
