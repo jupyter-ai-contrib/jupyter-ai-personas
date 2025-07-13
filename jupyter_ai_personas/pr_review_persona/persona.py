@@ -210,43 +210,45 @@ class PRReviewPersona(BasePersona):
 
         try:
             team = self.initialize_team(system_prompt)
-            
+
             # Add periodic heartbeat messages during processing
             import asyncio
             import threading
-            
+
             # Flag to stop heartbeat when done
             processing = threading.Event()
             processing.set()
-            
+
             async def heartbeat():
                 await asyncio.sleep(120)
                 if processing.is_set():
                     self.send_message("⏳ Still processing large PR...")
-                    await asyncio.sleep(180) 
+                    await asyncio.sleep(180)
                     if processing.is_set():
                         self.send_message("⏳ Almost done...")
-                        await asyncio.sleep(300) 
+                        await asyncio.sleep(300)
                         if processing.is_set():
-                            self.send_message("⏳ Taking longer than expected, please wait...")
-            
+                            self.send_message(
+                                "⏳ Taking longer than expected, please wait..."
+                            )
+
             heartbeat_task = asyncio.create_task(heartbeat())
-            
+
             try:
                 response = await asyncio.to_thread(
                     team.run,
                     message.body,
                     stream=False,
                     stream_intermediate_steps=False,
-                show_full_reasoning=False,
+                    show_full_reasoning=False,
                 )
-                
+
                 # Stop heartbeat
                 processing.clear()
                 heartbeat_task.cancel()
-                
+
                 self.send_message(response.content)
-                
+
             except Exception as run_error:
                 processing.clear()
                 heartbeat_task.cancel()

@@ -5,7 +5,7 @@ import asyncio
 from dataclasses import dataclass
 
 # Force pytest to load asyncio plugin
-pytest_plugins = ('pytest_asyncio',)
+pytest_plugins = ("pytest_asyncio",)
 
 
 # mock classes for base_persona
@@ -19,7 +19,12 @@ class PersonaDefaults:
 
 class BasePersona:
     def __init__(
-        self, ychat=None, manager=None, config_manager=None, log=None, message_interrupted=None
+        self,
+        ychat=None,
+        manager=None,
+        config_manager=None,
+        log=None,
+        message_interrupted=None,
     ):
         self.ychat = ychat
         self.manager = manager
@@ -27,7 +32,7 @@ class BasePersona:
         self.log = log
         self.message_interrupted = message_interrupted
         self.name = "PRReviewPersona"
-        
+
         # Set up config_manager with required attributes
         self.config_manager.lm_provider = MagicMock()
         self.config_manager.lm_provider.name = "test_provider"
@@ -40,7 +45,7 @@ class BasePersona:
     async def stream_message(self, message_iterator):
         async for message in message_iterator:
             pass
-    
+
     def send_message(self, message):
         # Mock implementation for send_message
         pass
@@ -72,21 +77,24 @@ class PersonaAwareness:
         return
 
 
-# Mock asyncio operations 
+# Mock asyncio operations
 @pytest.fixture(autouse=True)
 def mock_asyncio_operations():
     # Mock asyncio.to_thread to actually call the function and handle exceptions
     async def mock_to_thread(func, *args, **kwargs):
         return func(*args, **kwargs)
-    
+
     def mock_create_task(coro):
         mock_task = MagicMock()
         mock_task.cancel = MagicMock()
         return mock_task
-    
-    with patch('asyncio.to_thread', side_effect=mock_to_thread), \
-         patch('asyncio.create_task', side_effect=mock_create_task):
+
+    with (
+        patch("asyncio.to_thread", side_effect=mock_to_thread),
+        patch("asyncio.create_task", side_effect=mock_create_task),
+    ):
         yield
+
 
 patch(
     "jupyter_ai.personas.persona_awareness.PersonaAwareness", PersonaAwareness

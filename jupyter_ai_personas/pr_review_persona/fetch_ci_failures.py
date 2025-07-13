@@ -1,8 +1,8 @@
 import os
-from github import Github
+
 import requests
 from agno.tools import tool
-from agno.agent import Agent
+from github import Github
 
 
 @tool

@@ -25,7 +25,6 @@ async def pr_persona():
     mock_manager = AsyncMock()
     mock_manager.outdated_timeout = 30000
 
-
     with patch(
         "jupyter_ai.personas.persona_awareness.PersonaAwareness"
     ) as mock_awareness:
