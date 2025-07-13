@@ -66,7 +66,7 @@ class PRReviewPersona(BasePersona):
                 "   - Do not just mention issues - CREATE the comments",
             ],
             tools=[
-                PythonTools(),
+                # PythonTools(),
                 GithubTools(
                     get_pull_requests=True,
                     get_pull_request_changes=True,
@@ -74,6 +74,7 @@ class PRReviewPersona(BasePersona):
                     get_directory_content=True,
                 ),
                 fetch_ci_failures,
+                create_inline_pr_comments,
                 ReasoningTools(add_instructions=True, think=True, analyze=True),
             ],
         )
@@ -89,7 +90,7 @@ class PRReviewPersona(BasePersona):
                 "3. Verify return value documentation",
                 "4. Check for documentation consistency",
             ],
-            tools=[PythonTools()],
+            tools=[],
             markdown=True,
         )
 
@@ -105,7 +106,7 @@ class PRReviewPersona(BasePersona):
                 "4. Check for insecure direct object references",
             ],
             tools=[
-                PythonTools(),
+                # PythonTools(),
                 ReasoningTools(
                     add_instructions=True,
                     think=True,
@@ -168,6 +169,7 @@ class PRReviewPersona(BasePersona):
             show_members_responses=True,
             enable_agentic_context=True,
             add_datetime_to_instructions=True,
+            show_tool_calls=False,
             tools=[
                 GithubTools(
                     get_pull_requests=True,
