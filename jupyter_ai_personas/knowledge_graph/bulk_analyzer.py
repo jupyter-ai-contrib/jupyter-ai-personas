@@ -3,12 +3,17 @@ import tree_sitter_python as tspython
 from tree_sitter import Language, Parser
 from neo4j import GraphDatabase
 import hashlib
+import boto3
+import json
 
 class BulkCodeAnalyzer:
-    def __init__(self, uri, auth):
+    def __init__(self, uri, auth, embd_name=None, embd_id=None):
         self.driver = GraphDatabase.driver(uri, auth=auth)
         self.PY_LANGUAGE = Language(tspython.language())
         self.parser = Parser(self.PY_LANGUAGE)
+        self.embd_name = embd_name  # Bedrock
+        self.embd_id = embd_id  # amazon.titan-embed-text-v1
+        self.bedrock_client = boto3.client('bedrock-runtime') if embd_name else None
     
     def analyze_folder(self, folder_path, clear_existing=False):
         """Analyze all supported files in a folder and add to knowledge graph"""
@@ -50,9 +55,12 @@ class BulkCodeAnalyzer:
     def _extract_code_elements(self, node, session, file_path, current_class=None):
         if node.type == 'class_definition':
             class_name = node.child_by_field_name("name").text.decode('utf8')
+            class_code = node.text.decode('utf8', errors='ignore')
+            embedding = self._get_embedding(class_code) if self.bedrock_client else None
+            
             session.run(
-                "MERGE (c:Class {name: $name}) SET c.file = $file",
-                name=class_name, file=file_path
+                "MERGE (c:Class {name: $name}) SET c.file = $file, c.embedding = $embedding",
+                name=class_name, file=file_path, embedding=embedding
             )
             
             superclasses = node.child_by_field_name("superclasses")
@@ -83,11 +91,14 @@ class BulkCodeAnalyzer:
             
             code_hash = hashlib.md5(func_code.encode()).hexdigest()
             
+            # Generate embedding for function code
+            embedding = self._get_embedding(func_code) if self.bedrock_client else None
+            
             session.run(
                 "MERGE (f:Function {name: $name, file: $file}) "
-                "SET f.code = $code, f.code_hash = $hash, f.parameters = $params, f.line_start = $start, f.line_end = $end",
+                "SET f.code = $code, f.code_hash = $hash, f.parameters = $params, f.line_start = $start, f.line_end = $end, f.embedding = $embedding",
                 name=func_name, file=file_path, code=func_code, hash=code_hash, params=params,
-                start=node.start_point[0], end=node.end_point[0]
+                start=node.start_point[0], end=node.end_point[0], embedding=embedding
             )
             
             if current_class:
@@ -111,12 +122,15 @@ class BulkCodeAnalyzer:
                 content = f.read()
             
             # Create a File node for non-Python files
+            embedding = self._get_embedding(content[:5000]) if self.bedrock_client else None
+            
             session.run(
-                "MERGE (f:File {path: $path}) SET f.content = $content, f.size = $size, f.type = $type",
+                "MERGE (f:File {path: $path}) SET f.content = $content, f.size = $size, f.type = $type, f.embedding = $embedding",
                 path=file_path, 
-                content=content[:5000],  # Limit content size
+                content=content[:5000],
                 size=len(content),
-                type=os.path.splitext(file_path)[1]
+                type=os.path.splitext(file_path)[1],
+                embedding=embedding
             )
             
         except Exception as e:
@@ -159,6 +173,18 @@ class BulkCodeAnalyzer:
                 "MERGE (caller)-[:CALLS]->(called)",
                 caller=caller_name, called=called_func, file=file_path
             )
+    
+    def _get_embedding(self, text):
+        """Generate embedding using AWS Bedrock Titan model"""
+        try:
+            response = self.bedrock_client.invoke_model(
+                modelId=self.embd_id,
+                body=json.dumps({"inputText": text})
+            )
+            return json.loads(response['body'].read())['embedding']
+        except Exception as e:
+            print(f"Error generating embedding: {e}")
+            return None
 
 
 # analyzer = BulkCodeAnalyzer("neo4j://127.0.0.1:7687", ("neo4j", "Bhavana@97"))

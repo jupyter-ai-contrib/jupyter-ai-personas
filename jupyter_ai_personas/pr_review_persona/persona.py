@@ -173,10 +173,11 @@ class PRReviewPersona(BasePersona):
                 "You are a Neo4j Cypher query specialist for comprehensive PR analysis.",
                 
                 "KNOWLEDGE GRAPH SCHEMA:",
-                "- Function nodes: {name, file, code, parameters, line_start, line_end, code_hash}",
-                "- Class nodes: {name, file}",
-                "- File nodes: {path, content, size, type}",
+                "- Function nodes: {name, file, code, parameters, line_start, line_end, code_hash, embedding}",
+                "- Class nodes: {name, file, embedding}",
+                "- File nodes: {path, content, size, type, embedding}",
                 "- Relationships: CALLS, INHERITS_FROM, CONTAINS",
+                "- Embeddings: Use f.embedding for semantic similarity searches",
                 
                 "WORKFLOW:",
                 "1. FIRST: Call get_schema_info() to understand the knowledge graph structure",
@@ -209,7 +210,8 @@ class PRReviewPersona(BasePersona):
                 
                 "3. EXECUTE each query using query_codebase() and provide detailed analysis",
                 "4. Include actual source code snippets when relevant using f.code property",
-                "5. Highlight potential breaking changes and risks"
+                "5. Use semantic search with embeddings: MATCH (f:Function) WHERE f.embedding IS NOT NULL",
+                "6. Highlight potential breaking changes and risks"
             ],
             tools=[RepoAnalysisTools()],
             markdown=True
@@ -397,7 +399,11 @@ class PRReviewPersona(BasePersona):
             if not neo4j_password:
                 raise ValueError('NEO4J_PASSWORD environment variable must be set')
                 
-            analyzer = BulkCodeAnalyzer(neo4j_uri, (neo4j_user, neo4j_password))
+            # embedding configuration
+            embd_name = self.config_manager.em_provider.name
+            embd_id = self.config_manager.em_provider_params["model_id"]
+            
+            analyzer = BulkCodeAnalyzer(neo4j_uri, (neo4j_user, neo4j_password), embd_name, embd_id)
             analyzer.analyze_folder(target_folder, clear_existing=True)
             kg_time = time.time() - kg_start
             
