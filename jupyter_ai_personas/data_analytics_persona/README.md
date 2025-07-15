@@ -70,6 +70,24 @@ The notebook contains sample AWS employee data with columns for age, salary, IQ,
 ![Open Chat](images/open_chat_selected_persona.png)
 
 #### Step 3: Provide Your Data
+**Important**: When adding data files (CSV, JSON, Excel, etc.) to your analysis, include the entire file path for best results.
+
+**Good Example** - Complete context:
+```python
+# Load and analyze sales data
+import pandas as pd
+df = pd.read_csv('/Users/username/projects/sales/quarterly_data.csv')
+print(df.head())
+```
+
+**Bad Example** - Incomplete use of file path:
+
+```python
+import pandas as pd
+df = pd.read_csv('quarterly_data.csv')
+print(df.head())
+```
+
 Simply paste your data or code containing data into the chat:
 
 ![User Prompt](images/user_prompt.png)
