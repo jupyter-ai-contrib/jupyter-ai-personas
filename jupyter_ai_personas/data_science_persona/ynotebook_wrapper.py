@@ -306,14 +306,17 @@ class YNotebookToolsWrapper:
     Provides a clean, simple interface for common notebook operations.
     """
     
-    def __init__(self, ynotebook: YNotebook):
+    def __init__(self, ynotebook: Optional[YNotebook]):
         """
-        Initialize with a YNotebook instance.
+        Initialize with a YNotebook instance or None for file-path based operation.
         
         Args:
-            ynotebook: The YNotebook instance to operate on
+            ynotebook: The YNotebook instance to operate on, or None for file-path mode
         """
-        self.tools = YNotebookTools(ynotebook)
+        if ynotebook:
+            self.tools = YNotebookTools(ynotebook)
+        else:
+            self.tools = None
     
     def get_active_notebook_info(self) -> dict:
         """Get information about the currently active notebook."""
@@ -389,6 +392,81 @@ class YNotebookToolsWrapper:
         return summary
     
     def get_tools(self) -> list:
-        """Get list of tools for Agno agent integration."""
-        # TODO: Implement proper Agno tools integration
-        return []
+        """Get essential tool for RAG context preparation."""
+        from agno.tools import Function
+        
+        return [
+            Function(
+                name="extract_rag_context",
+                description="Simple test tool that returns a basic string",
+                func=self._simple_test,
+            )
+            # Function(
+            #     name="extract_rag_context",
+            #     description="Extract all notebook content from file path. Usage: extract_rag_context(notebook_path='/path/to/notebook.ipynb')",
+            #     func=self._extract_rag_context_from_file,
+            # )
+        ]
+    
+    def _simple_test(self) -> str:
+        """Simple test function."""
+        return "✅ Tool is working! This is a test response from the ynotebook_wrapper."
+    
+    def _extract_rag_context_from_file(self, notebook_path: str = None) -> str:
+        """Extract complete notebook context from file path for RAG preparation."""
+        print(f"🔧 TOOL CALLED: extract_rag_context_from_file with path: {notebook_path}")
+        
+        if not notebook_path:
+            # Try default test notebook
+            notebook_path = "/Users/jujonahj/jupyter-ai-personas/jupyter_ai_personas/data_science_persona/test_context_retrieval.ipynb"
+            print(f"📝 No path provided, using default: {notebook_path}")
+        
+        try:
+            import json as json_lib
+            from pathlib import Path
+            
+            print(f"🔍 Checking if file exists: {notebook_path}")
+            notebook_file = Path(notebook_path)
+            
+            if not notebook_file.exists():
+                error_msg = f"Notebook file not found: {notebook_path}"
+                print(f"❌ {error_msg}")
+                return json.dumps({"error": error_msg})
+            
+            print(f"✅ File exists, reading notebook...")
+            
+            # Read notebook file
+            with open(notebook_file, 'r', encoding='utf-8') as f:
+                notebook_data = json_lib.load(f)
+            
+            print(f"📖 Notebook loaded, found {len(notebook_data.get('cells', []))} cells")
+            
+            all_content = []
+            cells = notebook_data.get('cells', [])
+            
+            # Extract all cells with their content and types
+            for i, cell in enumerate(cells):
+                cell_type = cell.get('cell_type', 'code')
+                source = ''.join(cell.get('source', [])).strip()
+                
+                if source:
+                    all_content.append(f"Cell {i} ({cell_type}):\n{source}")
+                    print(f"📝 Extracted cell {i} ({cell_type}): {len(source)} chars")
+            
+            # Combine everything into a structured format
+            context = {
+                "notebook_path": str(notebook_path),
+                "cell_count": len(cells),
+                "content": "\n\n".join(all_content)
+            }
+            
+            result = json.dumps(context, indent=2)
+            print(f"📋 SUCCESS: Extracted {len(all_content)} non-empty cells")
+            print(f"📋 Result preview: {result[:200]}...")
+            return result
+            
+        except Exception as e:
+            error_result = json.dumps({"error": f"Failed to extract notebook context: {str(e)}"})
+            print(f"❌ EXCEPTION: {str(e)}")
+            print(f"❌ ERROR RESULT: {error_result}")
+            return error_result

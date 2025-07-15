@@ -44,7 +44,22 @@ software_team = [
     "langchain-core",
     "pygithub"]
 
-all = ["jupyter-ai-personas[finance,emoji,software_team]"]
+context_retriever = [
+    "agno",
+    "boto3",
+    "langchain",
+    "langchain-core"
+]
+
+pocketflow_context_persona = [
+    "boto3",
+    "agno",
+    "langchain-core",
+    "chromadb",
+    "sentence-transformers"
+]
+
+all = ["jupyter-ai-personas[finance,emoji,software_team,context_retriever,pocketflow_context_persona]"]
 
 [build-system]
 requires = ["hatchling"]
@@ -54,3 +69,5 @@ build-backend = "hatchling.build"
 finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
 emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
 software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
+context_retriever_persona = "jupyter_ai_personas.data_science_persona.context_retriever_persona:ContextRetrieverPersona"
+pocketflow_context_persona = "jupyter_ai_personas.pocketflow_persona.pocketflow_persona:PocketFlowContextPersona"
