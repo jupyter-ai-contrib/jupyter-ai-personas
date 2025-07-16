@@ -29,7 +29,7 @@ class SoftwareTeamPersona(BasePersona):
         )
     
     def initialize_team(self, system_prompt):
-        model_id = self.config.lm_provider_params["model_id"]
+        model_id = self.config_manager.lm_provider_params["model_id"]
         
         planner = Agent(name="planner",
             role="Strategic planner who breaks down tasks into clear, actionable steps",
@@ -148,8 +148,8 @@ class SoftwareTeamPersona(BasePersona):
     async def process_message(self, message: Message):
         message_text = message.body
 
-        provider_name = self.config.lm_provider.name
-        model_id = self.config.lm_provider_params["model_id"]
+        provider_name = self.config_manager.lm_provider.name
+        model_id = self.config_manager.lm_provider_params["model_id"]
         
         history = YChatHistory(ychat=self.ychat, k=2)
         messages = await history.aget_messages()

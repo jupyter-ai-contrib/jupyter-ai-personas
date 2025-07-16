@@ -49,6 +49,10 @@ pr_review = [
     "agno",
     "boto3",
     "pygithub",
+    "langchain-core",
+    "neo4j",
+    "tree-sitter",
+    "tree-sitter-python",
     ]
 
 data_analytics = [
