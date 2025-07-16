@@ -25,7 +25,6 @@ async def pr_persona():
     mock_manager = AsyncMock()
     mock_manager.outdated_timeout = 30000
 
-    # Mock PersonaAwareness class
     with patch(
         "jupyter_ai.personas.persona_awareness.PersonaAwareness"
     ) as mock_awareness:
@@ -39,9 +38,9 @@ async def pr_persona():
         awareness_instance._start_heartbeat = mock_heartbeat
         awareness_instance.outdated_timeout = 30000
 
-        mock_config = Mock()
-        mock_config.lm_provider.name = "test_provider"
-        mock_config.lm_provider_params = {"model_id": "test_model"}
+        mock_config_manager = Mock()
+        mock_config_manager.lm_provider.name = "test_provider"
+        mock_config_manager.lm_provider_params = {"model_id": "test_model"}
         mock_log = Mock()
         mock_ychat.set_user = AwaitableAsyncMock()
         awareness_instance.set_local_state = AwaitableAsyncMock()
@@ -50,7 +49,7 @@ async def pr_persona():
         persona = PRReviewPersona(
             ychat=mock_ychat,
             manager=mock_manager,
-            config=mock_config,
+            config_manager=mock_config_manager,
             log=mock_log,
             message_interrupted=False,
         )
