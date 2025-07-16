@@ -29,7 +29,7 @@ except ImportError:
 session = boto3.Session()
 
 
-class ContextRetrieverPersona(BasePersona):
+class ContextRetrievalPersona(BasePersona):
     """
     Context Retrieval Specialist that analyzes prompts and notebook content
     to find relevant documentation and resources using RAG.
@@ -41,7 +41,7 @@ class ContextRetrieverPersona(BasePersona):
     @property
     def defaults(self):
         return PersonaDefaults(
-            name="ContextRetrieverPersona",
+            name="ContextRetrievalPersona",
             avatar_path="/api/ai/static/jupyternaut.svg",
             description="Context retrieval specialist for data science projects. Analyzes prompts and notebooks to find relevant resources using RAG.",
             system_prompt="""I am a context retrieval specialist team that analyzes your data science work and finds relevant resources from the Python Data Science Handbook using RAG search. 

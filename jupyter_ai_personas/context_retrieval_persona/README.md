@@ -1,4 +1,4 @@
-# Context Retriever Persona
+# Context Retrieval Persona
 
 A sophisticated Jupyter AI persona that analyzes your data science notebooks and provides contextual recommendations using Retrieval-Augmented Generation (RAG) from the Python Data Science Handbook.
 
@@ -13,6 +13,9 @@ The Context Retriever Persona is a multi-agent system that understands your curr
 - **Context-Aware Recommendations**: Provides relevant code examples, best practices, and documentation based on your current work
 - **Multi-Agent Architecture**: Three specialized agents for analysis, search, and report generation
 - **Comprehensive Reports**: Generates detailed markdown reports with actionable next steps
+- **Enhanced Chunk Display**: Full retrieved text chunks are displayed in terminal for debugging
+- **Automatic Report Saving**: Generated reports are automatically saved as `repo_context.md`
+- **Improved RAG Parameters**: Increased chunk size (1500 chars) and search results (8 chunks) for better coverage
 
 ## Architecture
 
@@ -154,21 +157,30 @@ Modify parameters in `rag_core.py`:
 ```python
 rag = PythonDSHandbookRAG(
     embedding_model="sentence-transformers/all-MiniLM-L6-v2",
-    chunk_size=1000,
-    chunk_overlap=200
+    chunk_size=1500,         # Increased chunk size
+    chunk_overlap=300        # Increased overlap
 )
 ```
+
+### RAG Search Parameters
+- **Default Results**: 8 chunks per search (increased from 5)
+- **Chunk Size**: 1500 characters (increased from 1000)
+- **Chunk Overlap**: 300 characters (increased from 200)
+- **Terminal Display**: Full retrieved chunks are logged to terminal for debugging
 
 ## File Structure
 
 ```
-data_science_persona/
+context_retrieval_persona/
 ├── README.md                      # This file
-├── context_retriever_persona.py   # Main persona class
+├── context_retrieval_persona.py   # Main persona class
 ├── rag_core.py                    # Core RAG system
 ├── rag_integration_tool.py        # Agno tool wrapper
 ├── file_reader_tool.py            # Notebook content extraction
 ├── setup_rag_system.py           # Setup script
+├── ynotebook_wrapper.py           # Jupyter notebook integration
+├── test_context_retrieval.ipynb   # Test notebook
+├── repo_context.md               # Generated markdown reports
 ├── PythonDataScienceHandbook/     # Cloned repository
 │   └── notebooks/                 # 100+ handbook notebooks
 └── vector_stores/                 # ChromaDB vector storage
