@@ -49,8 +49,8 @@ class PythonDSHandbookRAG:
         local_repo_path: str = None,
         vector_store_path: str = None,
         embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
-        chunk_size: int = 1000,
-        chunk_overlap: int = 200
+        chunk_size: int = 1500,
+        chunk_overlap: int = 300
     ):
         self.repo_url = repo_url
         
@@ -337,7 +337,7 @@ class PythonDSHandbookRAG:
                 return json.load(f)
         return {}
     
-    def search(self, query: str, k: int = 5, filter_dict: Optional[Dict] = None) -> List[Dict[str, Any]]:
+    def search(self, query: str, k: int = 8, filter_dict: Optional[Dict] = None) -> List[Dict[str, Any]]:
         """Search the vector store for relevant content."""
         if not self.vectorstore:
             logger.error("Vector store not initialized")
@@ -364,9 +364,12 @@ class PythonDSHandbookRAG:
                 }
                 results.append(result)
                 
-                # Log detailed search result
+                # Log detailed search result with full content
                 logger.info(f"📚 Result {i}: {result['notebook_name']} ({result['cell_type']})")
-                logger.info(f"   Content: {result['content'][:100]}...")
+                logger.info(f"   Source: {result['source']}")
+                logger.info(f"   Content Length: {len(result['content'])} characters")
+                logger.info(f"   Full Content: {result['content']}")
+                logger.info(f"   {'-' * 50}")
             
             logger.info(f"🔍 Found {len(results)} results for query: {query[:50]}...")
             return results
@@ -375,7 +378,7 @@ class PythonDSHandbookRAG:
             logger.error(f"Search failed: {e}")
             return []
     
-    def search_with_scores(self, query: str, k: int = 5) -> List[tuple]:
+    def search_with_scores(self, query: str, k: int = 8) -> List[tuple]:
         """Search with similarity scores."""
         if not self.vectorstore:
             logger.error("Vector store not initialized")

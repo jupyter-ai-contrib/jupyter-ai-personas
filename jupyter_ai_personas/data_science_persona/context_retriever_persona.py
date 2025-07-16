@@ -138,7 +138,8 @@ class ContextRetrieverPersona(BasePersona):
                 "- Actionable Next Steps",
                 "Include relevant code snippets with proper formatting",
                 "Provide specific next steps based on current analysis stage",
-                "Focus on actionable insights for immediate application"
+                "Focus on actionable insights for immediate application",
+                "IMPORTANT: Name the markdown file: 'repo_context.md'"
             ],
             tools=[FileTools()],
             markdown=True,
