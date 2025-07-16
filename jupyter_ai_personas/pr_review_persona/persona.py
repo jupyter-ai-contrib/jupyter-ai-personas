@@ -19,7 +19,8 @@ import subprocess
 import tempfile
 from jupyter_ai_personas.knowledge_graph.bulk_analyzer import BulkCodeAnalyzer
 import sys
-sys.path.append('../knowledge_graph')
+
+sys.path.append("../knowledge_graph")
 
 session = boto3.Session()
 
@@ -68,7 +69,6 @@ class PRReviewPersona(BasePersona):
                 "   - For NEW files: MUST search for similar patterns with CONTAINS queries",
                 "   - For MODIFIED files: MUST get current implementation before reviewing changes",
                 "   - NEVER skip KG analysis - even if file seems simple",
-                "   - ONLY use properties: 'name', 'file', 'code', 'parameters'",
                 "4 Query Generation & Context Analysis (REQUIRED):",
                 "   - FIRST: Describe the changes to the Query Generation Agent",
                 "   - REQUEST: FOCUSED KG queries limited to PR scope",
@@ -100,6 +100,7 @@ class PRReviewPersona(BasePersona):
                     get_directory_content=True,
                 ),
                 fetch_ci_failures,
+                create_inline_pr_comments,
                 ReasoningTools(add_instructions=True, think=True, analyze=True),
             ],
         )
@@ -115,7 +116,7 @@ class PRReviewPersona(BasePersona):
                 "3. Verify return value documentation",
                 "4. Check for documentation consistency",
             ],
-            tools=[],  #PythonTools()
+            tools=[],  # PythonTools()
             markdown=True,
         )
 
@@ -163,64 +164,59 @@ class PRReviewPersona(BasePersona):
             markdown=True,
         )
 
-        query_generator = Agent(name="query_generator",
+        query_generator = Agent(
+            name="query_generator",
             role="KG Query Specialist",
-            model=AwsBedrock(
-                id=model_id,
-                session=session
-            ),
+            model=AwsBedrock(id=model_id, session=session),
             instructions=[
                 "You are a Neo4j Cypher query specialist for comprehensive PR analysis.",
-                
                 "KNOWLEDGE GRAPH SCHEMA:",
                 "- Function nodes: {name, file, code, parameters, line_start, line_end, code_hash, embedding}",
                 "- Class nodes: {name, file, embedding}",
                 "- File nodes: {path, content, size, type, embedding}",
                 "- Relationships: CALLS, INHERITS_FROM, CONTAINS",
                 "- Embeddings: Use f.embedding for semantic similarity searches",
-                
                 "WORKFLOW:",
                 "1. FIRST: Call get_schema_info() to understand the knowledge graph structure",
                 "2. For each changed file/function/class, generate and execute ALL relevant queries:",
-                
                 "CRITICAL QUERY SCENARIOS TO COVER:",
                 "A. Direct Dependencies:",
                 "   - Who calls this function? MATCH (caller:Function)-[:CALLS]->(target:Function {name: 'X'}) RETURN caller.name, caller.file",
                 "   - What does this function call? MATCH (f:Function {name: 'X'})-[:CALLS]->(called:Function) RETURN called.name, called.file",
-                
                 "B. Source Code Analysis:",
                 "   - Get function source: MATCH (f:Function {name: 'X'}) RETURN f.name, f.code, f.parameters, f.line_start",
                 "   - Compare signatures: MATCH (f:Function) WHERE f.file CONTAINS 'changed_file' RETURN f.name, f.parameters",
-                
                 "C. Cross-Module Impact:",
                 "   - Cross-file dependencies: MATCH (f1:Function)-[:CALLS]->(f2:Function) WHERE f1.file <> f2.file AND f2.file CONTAINS 'changed_file' RETURN f1.file, f1.name, f2.name",
                 "   - Module boundaries: Check if changes break module interfaces",
-                
                 "D. Inheritance Analysis:",
                 "   - Child classes: MATCH (child:Class)-[:INHERITS_FROM]->(parent:Class {name: 'X'}) RETURN child.name, child.file",
                 "   - Method overrides: MATCH (parent:Class)-[:CONTAINS]->(pm:Function), (child:Class)-[:INHERITS_FROM]->(parent), (child)-[:CONTAINS]->(cm:Function) WHERE pm.name = cm.name RETURN child.name, pm.name, pm.parameters, cm.parameters",
-                
                 "E. Breaking Change Detection:",
                 "   - Dead code: MATCH (f:Function) WHERE NOT EXISTS((caller:Function)-[:CALLS]->(f)) AND f.file CONTAINS 'changed_file' RETURN f.name, f.file",
                 "   - Circular dependencies: MATCH path = (f1:Function)-[:CALLS*2..5]->(f1) WHERE ANY(n IN nodes(path) WHERE n.file CONTAINS 'changed_file') RETURN [n IN nodes(path) | n.name]",
-                
                 "F. Test Coverage:",
                 "   - Test relationships: MATCH (test:Function)-[:CALLS]->(f:Function) WHERE test.file CONTAINS 'test' AND f.file CONTAINS 'changed_file' RETURN test.name, f.name",
                 "   - Missing tests: MATCH (f:Function) WHERE f.file CONTAINS 'changed_file' AND NOT EXISTS((test:Function)-[:CALLS]->(f) WHERE test.file CONTAINS 'test') RETURN f.name",
-                
                 "3. EXECUTE each query using query_codebase() and provide detailed analysis",
                 "4. Include actual source code snippets when relevant using f.code property",
                 "5. Use semantic search with embeddings: MATCH (f:Function) WHERE f.embedding IS NOT NULL",
-                "6. Highlight potential breaking changes and risks"
+                "6. Highlight potential breaking changes and risks",
             ],
             tools=[RepoAnalysisTools()],
-            markdown=True
+            markdown=True,
         )
 
         pr_review_team = Team(
             name="pr-review-team",
             mode="coordinate",
-            members=[query_generator, code_quality, documentation_checker, security_checker, gitHub],
+            members=[
+                query_generator,
+                code_quality,
+                documentation_checker,
+                security_checker,
+                gitHub,
+            ],
             model=AwsBedrock(id=model_id, session=session),
             instructions=[
                 "Coordinate PR review process with specialized team members:",
@@ -229,21 +225,18 @@ class PRReviewPersona(BasePersona):
                 "   - Generate queries ONLY based on real changes from diff",
                 "   - NEVER generate queries based on assumptions",
                 "   - Provide query recommendations to other team members",
-
                 "2. Code Quality Analyst:",
                 "   - Use query results from Query Generator for context",
                 "   - Request specific source code analysis when needed",
                 "   - Focus on code quality issues revealed by dependency analysis",
                 "   - Check CI status and analyze any failures",
                 "   - Identify breaking changes based on KG analysis",
-
                 "3. Documentation Specialist:",
                 "   - Review documentation completeness",
                 "   - Focus on critical documentation issues",
                 "4. Security Analyst:",
                 "   - Check for security vulnerabilities",
                 "   - Prioritize high-impact issues",
-
                 "5. GitHub Specialist:",
                 "   - FIRST ACTION: Call get_pull_request_changes() with actual repo URL and PR number",
                 "   - VERIFY: Show actual PR diff data in response",
@@ -251,12 +244,10 @@ class PRReviewPersona(BasePersona):
                 "   - MUST run KG queries for each changed file from ACTUAL diff",
                 "   - Provide deep code context using graph traversal and queries",
                 "   - Keep PR metadata minimal",
-
-                "6. CRITICAL - Always create inline comments:",
-                "   - MUST call create_inline_pr_comments for any issues found",
-                "   - Do not just report issues - POST them as comments",
-                "   - Use the exact format: [{\"path\": \"file.py\", \"position\": 10, \"body\": \"issue description\"}]",
-
+                "6. CRITICAL - Code Quality Analyst handles inline comments:",
+                "   - Code Quality Analyst will create inline comments for issues",
+                "   - Other team members should report issues to Code Quality Analyst",
+                "   - Focus on identifying and reporting actionable issues",
                 "7. Synthesize findings:",
                 "   - Combine key insights from all members",
                 "   - Focus on actionable items",
@@ -272,7 +263,6 @@ class PRReviewPersona(BasePersona):
                     get_pull_requests=True,
                     get_pull_request_changes=True,
                 ),
-                create_inline_pr_comments,
                 ReasoningTools(add_instructions=True, think=True, analyze=True),
             ],
         )
@@ -310,43 +300,45 @@ class PRReviewPersona(BasePersona):
 
         try:
             team = self.initialize_team(system_prompt)
-            
+
             # Add periodic heartbeat messages during processing
             import asyncio
             import threading
-            
+
             # Flag to stop heartbeat when done
             processing = threading.Event()
             processing.set()
-            
+
             async def heartbeat():
                 await asyncio.sleep(120)
                 if processing.is_set():
                     self.send_message("⏳ Still processing large PR...")
-                    await asyncio.sleep(180) 
+                    await asyncio.sleep(180)
                     if processing.is_set():
                         self.send_message("⏳ Almost done...")
-                        await asyncio.sleep(300) 
+                        await asyncio.sleep(300)
                         if processing.is_set():
-                            self.send_message("⏳ Taking longer than expected, please wait...")
-            
+                            self.send_message(
+                                "⏳ Taking longer than expected, please wait..."
+                            )
+
             heartbeat_task = asyncio.create_task(heartbeat())
-            
+
             try:
                 response = await asyncio.to_thread(
                     team.run,
                     message.body,
                     stream=False,
                     stream_intermediate_steps=False,
-                show_full_reasoning=False,
+                    show_full_reasoning=False,
                 )
-                
+
                 # Stop heartbeat
                 processing.clear()
                 heartbeat_task.cancel()
-                
+
                 self.send_message(response.content)
-                
+
             except Exception as run_error:
                 processing.clear()
                 heartbeat_task.cancel()
@@ -360,60 +352,67 @@ class PRReviewPersona(BasePersona):
             error_message = f"PR Review Error ({type(e).__name__}): {str(e)}\nAn unexpected error occurred while the PR review team was analyzing your request."
             self.send_message(error_message)
 
-
-
-    
     def _auto_analyze_repo(self, pr_text: str):
         """Automatically extract repo URL and create knowledge graph"""
         patterns = [
-            r'https://github\.com/([^/\s]+/[^/\s]+)',
-            r'github\.com/([^/\s]+/[^/\s]+)'
+            r"https://github\.com/([^/\s]+/[^/\s]+)",
+            r"github\.com/([^/\s]+/[^/\s]+)",
         ]
-        
+
         for pattern in patterns:
             match = re.search(pattern, pr_text)
             if match:
-                repo_path = match.group(1).rstrip('/')
+                repo_path = match.group(1).rstrip("/")
                 repo_url = f"https://github.com/{repo_path}.git"
                 self._clone_and_analyze(repo_url)
                 break
-    
+
     def _clone_and_analyze(self, repo_url: str):
         """Clone repository and create knowledge graph"""
         import time
+
         start_time = time.time()
-        
+
         try:
             temp_dir = tempfile.mkdtemp()
             target_folder = os.path.join(temp_dir, "repo_analysis")
-            
+
             clone_start = time.time()
-            subprocess.run(["git", "clone", repo_url, target_folder], check=True, capture_output=True)
+            subprocess.run(
+                ["git", "clone", repo_url, target_folder],
+                check=True,
+                capture_output=True,
+            )
             clone_time = time.time() - clone_start
-            
+
             kg_start = time.time()
-            neo4j_uri = os.getenv('NEO4J_URI', 'neo4j://127.0.0.1:7687')
-            neo4j_user = os.getenv('NEO4J_USER', 'neo4j')
-            neo4j_password = os.getenv('NEO4J_PASSWORD')
-            
+            neo4j_uri = os.getenv("NEO4J_URI", "neo4j://127.0.0.1:7687")
+            neo4j_user = os.getenv("NEO4J_USER", "neo4j")
+            neo4j_password = os.getenv("NEO4J_PASSWORD")
+
             if not neo4j_password:
-                raise ValueError('NEO4J_PASSWORD environment variable must be set')
-                
+                raise ValueError("NEO4J_PASSWORD environment variable must be set")
+
             # embedding configuration
             embd_name = self.config_manager.em_provider.name
             embd_id = self.config_manager.em_provider_params["model_id"]
-            
-            analyzer = BulkCodeAnalyzer(neo4j_uri, (neo4j_user, neo4j_password), embd_name, embd_id)
+
+            analyzer = BulkCodeAnalyzer(
+                neo4j_uri, (neo4j_user, neo4j_password), embd_name, embd_id
+            )
             analyzer.analyze_folder(target_folder, clear_existing=True)
             kg_time = time.time() - kg_start
-            
+
             total_time = time.time() - start_time
-            print(f"KG Creation Times - Clone: {clone_time:.2f}s, Analysis: {kg_time:.2f}s, Total: {total_time:.2f}s")
-            
+            print(
+                f"KG Creation Times - Clone: {clone_time:.2f}s, Analysis: {kg_time:.2f}s, Total: {total_time:.2f}s"
+            )
+
         except Exception as e:
             print(f"Error analyzing repository {repo_url}: {e}")
         finally:
             # Cleanup temporary directory
             import shutil
-            if 'temp_dir' in locals():
+
+            if "temp_dir" in locals():
                 shutil.rmtree(temp_dir, ignore_errors=True)
