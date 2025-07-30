@@ -49,6 +49,10 @@ pr_review = [
     "agno",
     "boto3",
     "pygithub",
+    "langchain-core",
+    "neo4j",
+    "tree-sitter",
+    "tree-sitter-python",
     ]
 
 data_analytics = [
@@ -62,7 +66,14 @@ data_analytics = [
     "seaborn"
 ]
 
-all = ["jupyter-ai-personas[finance,emoji,software_team,data_analytics,pr_review]"]
+task_master = [
+    "agno",
+    "boto3",
+    "requests",
+    "pygithub",
+    ]
+
+all = ["jupyter-ai-personas[finance,emoji,software_team,data_analytics,pr_review, task_master]"]
 
 [build-system]
 requires = ["hatchling"]
@@ -74,3 +85,4 @@ emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
 software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
 data_analytics_persona = "jupyter_ai_personas.data_analytics_persona.persona:DataAnalyticsTeam"
 pr_review_persona = "jupyter_ai_personas.pr_review_persona.persona:PRReviewPersona"
+pr_creation_persona = "jupyter_ai_personas.pr_creation_persona.persona:PRCreationPersona"

@@ -1,0 +1,142 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 11,
+        "title": "Analyze Current Heartbeat Function Implementation",
+        "description": "Analyze the existing PRReviewPersona.heartbeat function to understand its current structure, message flow, and timing logic.",
+        "details": "1. Locate the PRReviewPersona class in the codebase\n2. Identify the heartbeat function implementation\n3. Document the current message sequence and timing\n4. Identify areas of code duplication and excessive nesting\n5. Create a flow diagram of the current implementation\n6. Document any edge cases or special handling in the current code\n7. Measure current performance characteristics as a baseline",
+        "testStrategy": "No direct testing needed for this task, but document findings for validation in subsequent tasks. Create a reference document with timing measurements that can be used to verify the refactored implementation maintains the same behavior.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Design Message Configuration Data Structure",
+        "description": "Create a structured data format to hold message configurations including delays and text content.",
+        "details": "1. Define a tuple structure with (delay_in_seconds, message_text) format\n2. Create a list/tuple of these configurations representing the complete message sequence\n3. Extract all existing messages and their timing from the current implementation\n4. Organize messages in sequential order\n5. Consider using a TypedDict or NamedTuple for better type safety:\n```python\nfrom typing import List, Tuple, TypedDict\n\nclass MessageConfig(TypedDict):\n    delay: float\n    text: str\n\n# Or as a simple tuple list\nmessage_configs: List[Tuple[float, str]] = [\n    (1.5, \"Starting PR review...\"),\n    (2.0, \"Analyzing code changes...\"),\n    # Additional messages\n]\n```",
+        "testStrategy": "Create unit tests to verify:\n1. All messages from original implementation are included\n2. Timing values match original implementation\n3. Data structure can be iterated over correctly",
+        "priority": "high",
+        "dependencies": [
+          11
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Implement Message Iterator Mechanism",
+        "description": "Create an iterator-based mechanism to process message configurations sequentially with appropriate timing.",
+        "details": "1. Implement an async generator function to yield messages with delays\n2. Handle the timing between messages using asyncio.sleep\n3. Ensure the iterator can be interrupted when needed\n\n```python\nasync def message_iterator(message_configs):\n    \"\"\"Generate status messages with appropriate delays.\"\"\"\n    for delay, message in message_configs:\n        yield message\n        await asyncio.sleep(delay)\n```\n\n4. Consider adding a parameter to control whether to include initial delay\n5. Add proper error handling for asyncio operations",
+        "testStrategy": "1. Unit test the iterator with mock timing to verify message sequence\n2. Test interruption scenarios\n3. Verify timing accuracy using asyncio test utilities\n4. Test with various message configurations",
+        "priority": "high",
+        "dependencies": [
+          12
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Implement Processing Status Check Mechanism",
+        "description": "Create a mechanism to check if PR review processing is complete and break the message iteration when necessary.",
+        "details": "1. Analyze how the current implementation detects completion\n2. Implement a clean way to check processing status\n3. Create a mechanism to signal the iterator to stop\n\n```python\nasync def heartbeat(self, processing_complete_check):\n    \"\"\"Provide status updates during processing.\"\"\"\n    for message in message_iterator(MESSAGE_CONFIGS):\n        if await processing_complete_check():\n            break\n        await self.send_message(message)\n```\n\n4. Consider using asyncio.Event or similar mechanism for signaling\n5. Ensure proper cleanup of resources when breaking out of the loop",
+        "testStrategy": "1. Test with mock processing_complete_check functions that return at different times\n2. Verify the iterator stops when processing is complete\n3. Test edge cases (immediate completion, never completes)\n4. Verify no resource leaks when breaking early",
+        "priority": "high",
+        "dependencies": [
+          13
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Refactor Heartbeat Function Core Implementation",
+        "description": "Rewrite the PRReviewPersona.heartbeat function using the new data-driven approach with reduced nesting and complexity.",
+        "details": "1. Replace the current implementation with the new iterator-based approach\n2. Ensure maximum nesting level is 2 or less\n3. Implement proper error handling\n4. Maintain all existing functionality\n\n```python\nasync def heartbeat(self):\n    \"\"\"Provide status updates during PR review processing.\"\"\"\n    message_configs = [\n        (1.5, \"Starting PR review...\"),\n        (2.0, \"Analyzing code changes...\"),\n        # Additional messages with their delays\n    ]\n    \n    async for message in message_iterator(message_configs):\n        if self.review_complete:\n            break\n        await self.send_message(message)\n```\n\n5. Ensure compatibility with the rest of the class\n6. Preserve any class-specific state management",
+        "testStrategy": "1. Compare output with original implementation\n2. Verify all messages appear with correct timing\n3. Test interruption when review completes\n4. Measure performance compared to baseline\n5. Verify integration with the rest of the PRReviewPersona class",
+        "priority": "high",
+        "dependencies": [
+          14
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Add Type Hints and Update Documentation",
+        "description": "Add comprehensive type hints and update function documentation for the refactored implementation.",
+        "details": "1. Add type hints to all new functions and data structures\n2. Update docstrings with detailed descriptions\n3. Include parameter and return type documentation\n4. Add examples in docstrings where appropriate\n\n```python\nfrom typing import List, Tuple, Callable, AsyncIterator, TypeVar, Any\n\nMessageConfig = Tuple[float, str]\n\nasync def message_iterator(configs: List[MessageConfig]) -> AsyncIterator[str]:\n    \"\"\"Generate status messages with appropriate delays.\n    \n    Args:\n        configs: List of (delay, message) tuples\n        \n    Yields:\n        Status messages in sequence with appropriate delays\n    \"\"\"\n    # Implementation\n\nasync def heartbeat(self) -> None:\n    \"\"\"Provide status updates during PR review processing.\n    \n    Sends a series of status messages with appropriate timing\n    until the review process is complete.\n    \"\"\"\n    # Implementation\n```\n\n5. Update any related class documentation",
+        "testStrategy": "1. Run mypy or similar type checker to verify type correctness\n2. Verify documentation builds correctly\n3. Review docstrings for completeness and accuracy\n4. Ensure examples in documentation are correct",
+        "priority": "medium",
+        "dependencies": [
+          15
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Implement Unit Tests for Refactored Code",
+        "description": "Create comprehensive unit tests for the refactored heartbeat function and supporting components.",
+        "details": "1. Create test cases for the message configuration structure\n2. Implement tests for the message iterator\n3. Create tests for the processing status check mechanism\n4. Implement tests for the heartbeat function itself\n\n```python\nimport pytest\nimport asyncio\nfrom unittest.mock import MagicMock, patch\n\n@pytest.mark.asyncio\nasync def test_message_iterator():\n    configs = [(0.1, \"msg1\"), (0.1, \"msg2\")]\n    messages = []\n    async for msg in message_iterator(configs):\n        messages.append(msg)\n    assert messages == [\"msg1\", \"msg2\"]\n\n@pytest.mark.asyncio\nasync def test_heartbeat_stops_when_complete():\n    # Test implementation\n    pass\n```\n\n5. Include tests for edge cases and error conditions\n6. Test timing accuracy (with appropriate test utilities)\n7. Aim for 100% code coverage",
+        "testStrategy": "1. Run tests with pytest or similar framework\n2. Measure code coverage and ensure it meets requirements\n3. Verify tests pass consistently\n4. Include both unit tests and integration tests",
+        "priority": "medium",
+        "dependencies": [
+          15
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Perform Code Quality Checks",
+        "description": "Run code quality tools to ensure the refactored code meets quality standards and has no regressions.",
+        "details": "1. Run pylint or similar linter on the refactored code\n2. Check for any new warnings or errors\n3. Verify code complexity metrics\n   - Maximum nesting level should be 2 or less\n   - No duplicate code\n4. Run type checking with mypy\n5. Verify PEP 8 compliance\n6. Check for any performance regressions\n\n```bash\n# Example commands to run\npylint jupyter_ai_personas/pr_review_persona.py\nmypy jupyter_ai_personas/pr_review_persona.py\nblack --check jupyter_ai_personas/pr_review_persona.py\n```\n\n7. Address any issues found during quality checks",
+        "testStrategy": "1. Compare quality metrics before and after refactoring\n2. Document any improvements in code quality\n3. Ensure no new warnings are introduced\n4. Verify all quality checks pass in CI environment",
+        "priority": "medium",
+        "dependencies": [
+          16,
+          17
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Perform Integration Testing",
+        "description": "Test the refactored heartbeat function in the context of the full PRReviewPersona class and its interactions.",
+        "details": "1. Create integration tests that use the PRReviewPersona class with real or mock PR data\n2. Verify the heartbeat function works correctly in the context of a full PR review\n3. Test interactions with other components\n4. Verify message delivery in end-to-end scenarios\n\n```python\n@pytest.mark.asyncio\nasync def test_pr_review_with_heartbeat():\n    # Setup mock PR data\n    pr_data = {...}\n    \n    # Create persona instance\n    persona = PRReviewPersona(...)\n    \n    # Start review process\n    review_task = asyncio.create_task(persona.review_pr(pr_data))\n    \n    # Verify heartbeat messages are sent\n    # Complete test implementation\n```\n\n5. Test with various PR scenarios (simple PR, complex PR, etc.)\n6. Verify behavior matches original implementation",
+        "testStrategy": "1. Run integration tests in a controlled environment\n2. Monitor message output and timing\n3. Verify correct interaction with other components\n4. Test with real-world PR examples if possible",
+        "priority": "medium",
+        "dependencies": [
+          15,
+          17
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Documentation and Final Review",
+        "description": "Update project documentation and perform a final review of the refactored implementation.",
+        "details": "1. Update any project documentation referencing the heartbeat function\n2. Document the new approach in code comments\n3. Create a summary of changes for the pull request\n4. Prepare before/after code samples to demonstrate improvements\n5. Document any performance improvements or other benefits\n6. Create a changelog entry if appropriate\n7. Prepare for code review by addressing potential questions\n\n```markdown\n## Refactoring Summary\n\nThe `PRReviewPersona.heartbeat` function has been refactored to use a data-driven approach with the following improvements:\n\n- Reduced code nesting from X levels to 2 levels\n- Eliminated code duplication\n- Improved maintainability through clear separation of configuration and logic\n- Added comprehensive type hints and documentation\n- Maintained all existing functionality and timing\n\n### Before/After Comparison\n\n[Include code snippets showing the improvement]\n```",
+        "testStrategy": "1. Review documentation for accuracy and completeness\n2. Verify all changes are properly documented\n3. Have another team member review the documentation\n4. Ensure documentation builds correctly in the project's documentation system",
+        "priority": "low",
+        "dependencies": [
+          18,
+          19
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-29T00:20:35.150Z",
+      "updated": "2025-07-29T00:31:28.500Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
