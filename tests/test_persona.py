@@ -103,7 +103,16 @@ async def test_initialize_team(
         ]
         mock_team_class.return_value = mock_team
 
-        with patch("os.getenv", return_value="dummy_token"):
+        def mock_getenv(key, default=None):
+            env_vars = {
+                "GITHUB_ACCESS_TOKEN": "dummy_token",
+                "NEO4J_URI": "neo4j://localhost:7687",
+                "NEO4J_USER": "neo4j",
+                "NEO4J_PASSWORD": "test_password"
+            }
+            return env_vars.get(key, default)
+        
+        with patch("os.getenv", side_effect=mock_getenv):
             team = persona.initialize_team("test prompt")
 
         assert team is mock_team
