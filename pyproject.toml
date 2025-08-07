@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "S R Das", email = "srdas@scu.edu" }
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.9, <3.13"
 
 dependencies = [
     "jupyter_ai>=3.0.0a1"
@@ -62,7 +62,27 @@ data_analytics = [
     "seaborn"
 ]
 
-all = ["jupyter-ai-personas[finance,emoji,software_team,data_analytics,pr_review]"]
+data_science = [
+    "agno",
+    "boto3",
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "jupyter",
+    "ipython",
+    "seaborn",
+    "scikit-learn",
+    "scipy",
+    "chromadb",
+    "sentence-transformers",
+    "langchain-core",
+    "autogluon",
+    "beautifulsoup4", 
+    "requests", 
+    "pyyaml" 
+]
+
+all = ["jupyter-ai-personas[finance,emoji,software_team,data_analytics,pr_review,data_science]"]
 
 [build-system]
 requires = ["hatchling"]
@@ -74,3 +94,4 @@ emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
 software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
 data_analytics_persona = "jupyter_ai_personas.data_analytics_persona.persona:DataAnalyticsTeam"
 pr_review_persona = "jupyter_ai_personas.pr_review_persona.persona:PRReviewPersona"
+data_science_persona = "jupyter_ai_personas.data_science_persona.persona:DataSciencePersona"

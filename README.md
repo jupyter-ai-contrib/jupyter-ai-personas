@@ -51,6 +51,9 @@ pip install -e ".[<optional-dependencies>]"
 | finance_persona | finance  |
 | emoji_persona  | emoji  |
 | software_team_persona  | software_team |
+| data_analytics_persona  | data_analytics  |
+| data_science_persona  | data_science  |
+| context_retrieval_persona  | context_retriever  |
 
 ## Example: The Emoji Persona
 
