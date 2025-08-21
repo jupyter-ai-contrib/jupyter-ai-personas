@@ -62,7 +62,18 @@ data_analytics = [
     "seaborn"
 ]
 
-all = ["jupyter-ai-personas[finance,emoji,software_team,data_analytics,pr_review]"]
+context_retriever = [
+    "agno",
+    "boto3",
+    "langchain",
+    "langchain-core",
+    "langchain-community",
+    "sentence-transformers",
+    "chromadb",
+    "nbformat"
+]
+
+all = ["jupyter-ai-personas[finance,emoji,software_team,data_analytics,pr_review,context_retriever]"]
 
 [build-system]
 requires = ["hatchling"]
@@ -74,3 +85,4 @@ emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
 software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
 data_analytics_persona = "jupyter_ai_personas.data_analytics_persona.persona:DataAnalyticsTeam"
 pr_review_persona = "jupyter_ai_personas.pr_review_persona.persona:PRReviewPersona"
+context_retrieval_persona = "jupyter_ai_personas.context_retrieval_persona.persona:ContextRetrievalPersona"
