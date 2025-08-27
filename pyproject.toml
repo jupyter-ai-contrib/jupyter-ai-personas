@@ -71,6 +71,7 @@ build-backend = "hatchling.build"
 [project.entry-points."jupyter_ai.personas"]
 finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
 emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
-software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
-data_analytics_persona = "jupyter_ai_personas.data_analytics_persona.persona:DataAnalyticsTeam"
-pr_review_persona = "jupyter_ai_personas.pr_review_persona.persona:PRReviewPersona"
+# Uncomment the personas below once they are refactored for litellm in Jupyter AI
+# software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
+# data_analytics_persona = "jupyter_ai_personas.data_analytics_persona.persona:DataAnalyticsTeam"
+# pr_review_persona = "jupyter_ai_personas.pr_review_persona.persona:PRReviewPersona"

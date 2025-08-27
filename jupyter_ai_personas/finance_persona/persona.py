@@ -2,14 +2,11 @@ from typing import Any
 from pydantic import Field, BaseModel
 
 from jupyterlab_chat.models import Message
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables.history import RunnableWithMessageHistory
 from jupyter_core.paths import jupyter_data_dir
 
-from jupyter_ai.history import YChatHistory
 from jupyter_ai.personas import BasePersona, PersonaDefaults
-from jupyter_ai.personas.jupyternaut.prompt_template import JUPYTERNAUT_PROMPT_TEMPLATE, JupyternautVariables
 from jupyter_ai.config_manager import DEFAULT_CONFIG_PATH
+from litellm import acompletion
 
 from agno.agent import Agent
 from agno.models.aws import AwsBedrock
@@ -71,49 +68,61 @@ class FinancePersona(BasePersona):
 
 
     async def process_message(self, message: Message):
-        provider_name = self.config_manager.lm_provider.name
-        model_id = self.config_manager.lm_provider_params["model_id"]
+        if not self.config_manager.chat_model:
+            self.send_message(
+                "No chat model is configured.\n\n"
+                "You must set one first in the Jupyter AI settings, found in 'Settings > AI Settings' from the menu bar."
+            )
+            return
 
-        runnable = self.build_runnable()
-        variables = JupyternautVariables(
-            input=message.body,
-            model_id=model_id,
-            provider_name=provider_name,
-            persona_name=self.name,
+        model_id = self.config_manager.chat_model
+        model_args = self.config_manager.chat_model_args
+        
+        # Check if the prompt is about finance using litellm
+        prompt = message.body.split(" ", 1)[1]
+        response = await acompletion(
+            **model_args,
+            model=model_id,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a classifier that determines if a message is finance related. Respond with true or false."
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            stream=False,
         )
+        is_finance = "true" in response.choices[0].message.content.lower()
 
-        # Check if the prompt is about finance. If so, pass on to agentic workflow, else use default handling
-        prompt = variables.input.split(" ", 1)[1]
-        llm = self.config_manager.lm_provider(**self.config_manager.lm_provider_params)
-        llm = llm.with_structured_output(
-            UserQueryClassifier, 
-        )
-        response = llm.invoke(prompt) # Gets the full AI message response
-
-        # If the message is finance-related, proceed with default handling
-        if response.is_finance_related:  # type:ignore[union-attr]
-            msg = variables.input.split(" ", 1)[1].strip()
+        # If the message is finance-related, proceed with agentic handling
+        if is_finance:
+            msg = message.body.split(" ", 1)[1].strip()
             if msg:
                 # Call the agno_finance function to process the message
                 self.agno_finance(msg)
             else:
                 self.send_message("Error: Query failed. Please try again with a different query.")
-        else: # If the message is not finance-related, use the default runnable
-            variables_dict = variables.model_dump()
-            reply_stream = runnable.astream(variables_dict)
-            await self.stream_message(reply_stream)
+        else: # If the message is not finance-related, use litellm
+            response = await acompletion(
+                **model_args,
+                model=model_id,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a helpful AI assistant."
+                    },
+                    {
+                        "role": "user",
+                        "content": message.body,
+                    },
+                ],
+                stream=False,
+            )
+            self.send_message(response.choices[0].message.content)
 
-    def build_runnable(self) -> Any:
-        # TODO: support model parameters. maybe we just add it to lm_provider_params in both 2.x and 3.x
-        llm = self.config_manager.lm_provider(**self.config_manager.lm_provider_params)
-        runnable = JUPYTERNAUT_PROMPT_TEMPLATE | llm | StrOutputParser()
-        runnable = RunnableWithMessageHistory(
-            runnable=runnable,  #  type:ignore[arg-type]
-            get_session_history=lambda: YChatHistory(ychat=self.ychat, k=0),
-            input_messages_key="input",
-            history_messages_key="history",
-        )
-        return runnable
     
     # Use Agno to process financial prompts 
     # Multi agent workflow to get stock prices and forecast them using ARIMA
