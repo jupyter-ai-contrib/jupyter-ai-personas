@@ -64,7 +64,7 @@ data_analytics = [
 
 pocketagent = [
     "pocketflow",
-    "duckduckgo_search",
+    "ddgs",
     "requests",
 ]
 
