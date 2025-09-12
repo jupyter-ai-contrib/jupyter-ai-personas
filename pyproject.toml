@@ -68,16 +68,17 @@ pocketagent = [
     "requests",
 ]
 
-all = ["jupyter-ai-personas[finance,emoji,software_team,data_analytics,pr_review,pocketagent]"]
+# all = ["jupyter-ai-personas[finance,emoji,software_team,data_analytics,pr_review,pocketagent]"]
+all = ["jupyter-ai-personas[pocketagent]"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.entry-points."jupyter_ai.personas"]
-emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
-finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
+# emoji_persona = "jupyter_ai_personas.emoji_persona.persona:EmojiPersona"
+# finance_persona = "jupyter_ai_personas.finance_persona.persona:FinancePersona"
 pocketagent_persona = "jupyter_ai_personas.pocketagent_persona.persona:PocketAgentPersona"
-software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
-data_analytics_persona = "jupyter_ai_personas.data_analytics_persona.persona:DataAnalyticsTeam"
-pr_review_persona = "jupyter_ai_personas.pr_review_persona.persona:PRReviewPersona"
+# software_team_persona = "jupyter_ai_personas.software_team_persona.persona:SoftwareTeamPersona"
+# data_analytics_persona = "jupyter_ai_personas.data_analytics_persona.persona:DataAnalyticsTeam"
+# pr_review_persona = "jupyter_ai_personas.pr_review_persona.persona:PRReviewPersona"
